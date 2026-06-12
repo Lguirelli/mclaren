@@ -769,3 +769,246 @@ p,
     text-align: center;
   }
 }
+
+
+/* =========================================================
+   V6 — títulos vermelhos, sem box, sem hifenização e alinhamento à direita
+   ========================================================= */
+
+/* Título inteiro vermelho, não apenas a primeira letra */
+h1,
+h2,
+h1::first-letter,
+h2::first-letter {
+  color: var(--car-red);
+}
+
+/* Não quebrar palavras em sílabas */
+p,
+.lead,
+.lead-small,
+.bullet-list,
+.bullet-list li,
+.stat-grid,
+.spec-grid,
+h1,
+h2 {
+  hyphens: none;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+/* Remove aparência de box/card e mantém só sombra/gradiente de separação */
+.panel-copy {
+  padding: clamp(0.25rem, 1vw, 0.65rem);
+}
+
+.panel-copy::before,
+.panel-copy-hero::before,
+.panel-copy-right::before,
+.panel-copy-center::before {
+  inset: -1.8rem -2.2rem;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.46) 42%, rgba(0, 0, 0, 0) 72%);
+}
+
+/* Sombra reforçada para leitura, sem precisar de card */
+h1,
+h2 {
+  text-shadow:
+    0 0.08rem 0.08rem rgba(0, 0, 0, 0.95),
+    0 0.75rem 2.2rem rgba(0, 0, 0, 0.82),
+    0 0 2.4rem rgba(0, 0, 0, 0.62);
+}
+
+p,
+.lead,
+.lead-small,
+.bullet-list,
+.stat-grid span,
+.spec-grid span,
+.stat-grid strong,
+.spec-grid strong {
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.85),
+    0 0.6rem 1.35rem rgba(0, 0, 0, 0.72),
+    0 0 1.65rem rgba(0, 0, 0, 0.52);
+}
+
+/* Box à direita: tudo alinhado à direita */
+.panel-right,
+.panel-copy-right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.panel-copy-right .kicker,
+.panel-copy-right h1,
+.panel-copy-right h2,
+.panel-copy-right p,
+.panel-copy-right .lead,
+.panel-copy-right .lead-small,
+.panel-copy-right .bullet-list,
+.panel-copy-right .stat-grid,
+.panel-copy-right .spec-grid {
+  text-align: right;
+  text-align-last: right;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.panel-copy-right .kicker::after,
+.panel-right .kicker::after {
+  margin-left: auto;
+  margin-right: 0;
+  background: linear-gradient(270deg, var(--car-red), rgba(226, 58, 46, 0));
+}
+
+/* Lista à direita com marcador e texto alinhados melhor */
+.panel-copy-right .bullet-list,
+.panel-right .bullet-list {
+  direction: rtl;
+  padding-left: 0;
+  padding-right: 1.15rem;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.panel-copy-right .bullet-list li,
+.panel-right .bullet-list li {
+  direction: ltr;
+  text-align: right;
+  text-align-last: right;
+  padding-left: 0;
+}
+
+/* Métricas e especificações à direita */
+.panel-copy-right .stat-grid,
+.panel-copy-right .spec-grid {
+  justify-items: stretch;
+}
+
+.panel-copy-right .stat-grid li,
+.panel-copy-right .spec-grid div {
+  text-align: right;
+}
+
+.panel-copy-right .stat-grid li::before,
+.panel-copy-right .spec-grid div::before {
+  margin-left: auto;
+  margin-right: 0;
+  background: linear-gradient(270deg, var(--car-red), var(--car-gold));
+}
+
+/* Remove sensação de card nas especificações */
+.spec-grid div {
+  background: transparent;
+  border-radius: 0;
+}
+
+/* Centralizado: mantém texto visualmente central, mas sem hifenizar */
+.panel-copy-center p,
+.panel-copy-center .lead,
+.panel-copy-center .lead-small {
+  text-align: center;
+  text-align-last: center;
+}
+
+/* Mobile: centralizado, justificado e sem quebra silábica */
+@media (max-width: 900px) {
+  .panel-copy,
+  .panel-copy-hero,
+  .panel-copy-right,
+  .panel-copy-center,
+  .panel-copy-wide {
+    text-align: center;
+    padding: 0.85rem 0.75rem;
+  }
+
+  .panel-copy::before,
+  .panel-copy-hero::before,
+  .panel-copy-right::before,
+  .panel-copy-center::before {
+    inset: -1.2rem -0.85rem;
+    border-radius: 0;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.54) 46%, rgba(0, 0, 0, 0) 76%);
+  }
+
+  .panel-copy-right .kicker,
+  .panel-copy-right h1,
+  .panel-copy-right h2,
+  .panel-copy-right p,
+  .panel-copy-right .lead,
+  .panel-copy-right .lead-small,
+  .panel-copy-right .bullet-list,
+  .panel-copy-right .stat-grid,
+  .panel-copy-right .spec-grid {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  p,
+  .lead,
+  .lead-small,
+  .panel-copy-right p,
+  .panel-copy-right .lead,
+  .panel-copy-center p,
+  .panel-copy-center .lead {
+    text-align: justify;
+    text-align-last: center;
+    hyphens: none;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .bullet-list,
+  .panel-right .bullet-list,
+  .panel-copy-right .bullet-list {
+    direction: ltr;
+    text-align: justify;
+    text-align-last: left;
+    padding-left: 1.15rem;
+    padding-right: 0;
+    width: 100%;
+    max-width: 26rem;
+  }
+
+  .bullet-list li,
+  .panel-right .bullet-list li,
+  .panel-copy-right .bullet-list li {
+    direction: ltr;
+    text-align: justify;
+    text-align-last: left;
+  }
+
+  .kicker::after,
+  .panel-right .kicker::after,
+  .panel-copy-right .kicker::after {
+    margin-left: auto;
+    margin-right: auto;
+    background: linear-gradient(90deg, transparent, var(--car-red), var(--car-gold), transparent);
+  }
+
+  .stat-grid li,
+  .spec-grid div,
+  .panel-copy-right .stat-grid li,
+  .panel-copy-right .spec-grid div {
+    text-align: center;
+  }
+
+  .stat-grid li::before,
+  .spec-grid div::before,
+  .panel-copy-right .stat-grid li::before,
+  .panel-copy-right .spec-grid div::before {
+    margin-left: auto;
+    margin-right: auto;
+    background: linear-gradient(90deg, var(--car-red), var(--car-gold));
+  }
+}
