@@ -1,99 +1,47 @@
 {
-  "description": "Pesquisa estruturada para acompanhar os keyframes e a posição do carro na tela.",
+  "description": "Ordem das seções alinhada ao novo percurso de câmera mais suave.",
   "sections": [
     {
       "progress": 0.0,
       "id": "hero",
       "camera": "frente 3/4 baixa",
-      "car_position": "carro grande, dominante, com leitura completa da frente e lateral",
       "title": "McLaren MP4/5",
-      "subtitle": "A Fórmula 1 em seu ponto de transição: potência aspirada, precisão aerodinâmica e uma das rivalidades mais intensas da história.",
-      "layout": "texto à esquerda ou sobre área negativa; carro ocupando centro/direita",
-      "content_focus": [
-        "nome do carro",
-        "impacto visual",
-        "números rápidos",
-        "CTA para explorar"
-      ]
+      "layout": "texto à esquerda, carro dominante ao centro-direita"
     },
     {
-      "progress": 0.18,
-      "id": "historia",
-      "camera": "capô em plongée",
-      "car_position": "detalhe superior da frente e capô",
-      "title": "O fim da era turbo. O início de uma nova linguagem.",
-      "subtitle": "O MP4/5 nasceu no momento em que a Fórmula 1 precisou reaprender a extrair performance sem a força bruta dos turbos.",
-      "layout": "texto curto em lateral oposta ao maior volume do carro",
-      "content_focus": [
-        "1989",
-        "mudança de regulamento",
-        "motor aspirado",
-        "McLaren-Honda"
-      ]
-    },
-    {
-      "progress": 0.36,
+      "progress": 0.2,
       "id": "design",
       "camera": "close frontal",
-      "car_position": "asa dianteira, bico e suspensão em destaque",
-      "title": "Baixo, largo e funcional.",
-      "subtitle": "Cada superfície existe para responder a uma necessidade de pista: entrada de ar, pressão aerodinâmica, refrigeração e estabilidade.",
-      "layout": "texto menor e mais técnico, evitando cobrir o close frontal",
-      "content_focus": [
-        "design exterior",
-        "frente baixa",
-        "asa dianteira",
-        "bico alongado"
-      ]
+      "title": "Design",
+      "layout": "texto à direita, close livre na dianteira"
     },
     {
-      "progress": 0.58,
+      "progress": 0.4,
+      "id": "historia",
+      "camera": "capô em plongée",
+      "title": "História",
+      "layout": "texto à esquerda, leitura superior do carro"
+    },
+    {
+      "progress": 0.62,
+      "id": "especificacoes",
+      "camera": "top-down diagonal",
+      "title": "Especificações",
+      "layout": "texto centralizado, composição gráfica limpa"
+    },
+    {
+      "progress": 0.82,
       "id": "legado",
-      "camera": "plano aberto distante",
-      "car_position": "carro menor no quadro, com respiro visual",
-      "title": "Um carro campeão em uma temporada de tensão.",
-      "subtitle": "O MP4/5 venceu, mas também ficou marcado pelo contexto humano e esportivo da rivalidade entre Senna e Prost.",
-      "layout": "texto pode ocupar mais espaço, porque o carro está distante",
-      "content_focus": [
-        "10 vitórias",
-        "título de construtores",
-        "Senna",
-        "Prost",
-        "legado"
-      ]
-    },
-    {
-      "progress": 0.8,
-      "id": "performance",
-      "camera": "traseira 3/4 baixa",
-      "car_position": "volume traseiro, asa e sensação de potência",
-      "title": "V10 aspirado. 13.000 rpm. 500 kg.",
-      "subtitle": "O MP4/5 transformou a nova era aspirada da Fórmula 1 em domínio competitivo.",
-      "layout": "números grandes próximos da traseira, sem bloquear asa e rodas",
-      "content_focus": [
-        "Honda RA109E",
-        "V10 aspirado",
-        "685 ps",
-        "6 marchas",
-        "fibra de carbono"
-      ]
+      "camera": "aberto e distante",
+      "title": "Legado",
+      "layout": "texto à esquerda, mais respiro visual"
     },
     {
       "progress": 1.0,
-      "id": "especificacoes",
-      "camera": "vista aérea diagonal top-down",
-      "car_position": "leitura limpa da proporção total",
-      "title": "Especificações do McLaren Honda MP4/5",
-      "subtitle": "Dados principais do carro usado na temporada de 1989 da Fórmula 1.",
-      "layout": "tabela técnica abaixo ou ao lado, aproveitando a leitura gráfica top-down",
-      "content_focus": [
-        "tabela técnica",
-        "dimensões",
-        "motor",
-        "transmissão",
-        "peso",
-        "pneus"
-      ]
+      "id": "performance",
+      "camera": "traseira 3/4 baixa",
+      "title": "Performance",
+      "layout": "texto à direita, final dramático"
     }
   ]
 }

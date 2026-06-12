@@ -15,8 +15,8 @@ const MODEL_PATH = './assets/mclaren-mp4-5.glb';
 const config = await fetch('./config/cameraPath.json').then((response) => response.json());
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x040404);
-scene.fog = new THREE.FogExp2(0x040404, 0.0105);
+scene.background = new THREE.Color(0x030303);
+scene.fog = new THREE.FogExp2(0x030303, 0.009);
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -24,15 +24,15 @@ const renderer = new THREE.WebGLRenderer({
   alpha: false,
   powerPreference: 'high-performance'
 });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.45));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.56;
+renderer.toneMappingExposure = 0.5;
 renderer.shadowMap.enabled = false;
 
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
-scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.03).texture;
+scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.02).texture;
 
 const camera = new THREE.PerspectiveCamera(
   config.camera.fov,
@@ -61,19 +61,19 @@ let bokehPass;
 scene.add(modelGroup);
 
 function addLighting() {
-  const key = new THREE.DirectionalLight(0xfff2e1, 1.15);
-  key.position.set(-5.4, 4.8, 4.5);
+  const key = new THREE.DirectionalLight(0xfff0df, 0.95);
+  key.position.set(-5.4, 4.8, 4.4);
   scene.add(key);
 
-  const rim = new THREE.DirectionalLight(0xd9e7ff, 0.45);
-  rim.position.set(5.8, 2.4, -5.8);
+  const rim = new THREE.DirectionalLight(0xd9e8ff, 0.28);
+  rim.position.set(5.8, 2.6, -5.7);
   scene.add(rim);
 
-  const soft = new THREE.HemisphereLight(0xffffff, 0x080808, 0.22);
+  const soft = new THREE.HemisphereLight(0xffffff, 0x080808, 0.14);
   scene.add(soft);
 
-  const fill = new THREE.RectAreaLight(0xfff5ea, 0.22, 3.0, 1.25);
-  fill.position.set(0, 3.4, 3.0);
+  const fill = new THREE.RectAreaLight(0xfff5ea, 0.12, 3.0, 1.25);
+  fill.position.set(0.2, 3.2, 3.2);
   fill.lookAt(0, 0.7, 0);
   scene.add(fill);
 }
@@ -81,7 +81,7 @@ function addLighting() {
 function addStage() {
   const backdrop = new THREE.SphereGeometry(70, 48, 24);
   const backdropMaterial = new THREE.MeshBasicMaterial({
-    color: 0x030303,
+    color: 0x020202,
     side: THREE.BackSide
   });
   scene.add(new THREE.Mesh(backdrop, backdropMaterial));
@@ -104,18 +104,14 @@ function fitModelToScene(root) {
 function stripHelpers(root) {
   const toRemove = [];
   root.traverse((child) => {
-    if (child.isLight || child.isCamera) {
-      toRemove.push(child);
-    }
+    if (child.isLight || child.isCamera) toRemove.push(child);
   });
-
   toRemove.forEach((child) => child.parent?.remove(child));
 }
 
 function selectPrimaryModel(root) {
   const named = root.getObjectByName('McLaren mp4.5');
-  const base = named ?? root;
-  const model = base.clone(true);
+  const model = (named ?? root).clone(true);
   stripHelpers(model);
   return model;
 }
@@ -131,7 +127,7 @@ function improveMaterials(root) {
     const materials = Array.isArray(child.material) ? child.material : [child.material];
     materials.forEach((material) => {
       if (!material) return;
-      material.envMapIntensity = material.metalness > 0.25 ? 0.24 : 0.14;
+      material.envMapIntensity = material.metalness > 0.25 ? 0.18 : 0.12;
       material.needsUpdate = true;
     });
   });
@@ -171,35 +167,35 @@ function interpolateKeyframes(progress) {
 
 function updateSceneFromScroll(delta) {
   desiredScroll = getScrollProgress();
-  smoothScroll = THREE.MathUtils.damp(smoothScroll, desiredScroll, 4.2, delta);
+  smoothScroll = THREE.MathUtils.damp(smoothScroll, desiredScroll, 4.0, delta);
 
   const frame = interpolateKeyframes(smoothScroll);
   cameraRig.desiredPosition.copy(frame.position);
   cameraRig.desiredTarget.copy(frame.target);
 
-  smoothPointer.lerp(pointer, 0.045);
-  const handheldX = smoothPointer.x * 0.07;
-  const handheldY = smoothPointer.y * 0.05;
+  smoothPointer.lerp(pointer, 0.035);
+  const handheldX = smoothPointer.x * 0.045;
+  const handheldY = smoothPointer.y * 0.03;
 
-  cameraRig.currentPosition.lerp(cameraRig.desiredPosition, config.camera.smoothness ?? 0.072);
-  cameraRig.currentTarget.lerp(cameraRig.desiredTarget, config.camera.smoothness ?? 0.072);
+  cameraRig.currentPosition.lerp(cameraRig.desiredPosition, config.camera.smoothness ?? 0.07);
+  cameraRig.currentTarget.lerp(cameraRig.desiredTarget, config.camera.smoothness ?? 0.07);
 
   camera.position.copy(cameraRig.currentPosition);
   camera.position.x += handheldX;
   camera.position.y += handheldY;
 
   cameraRig.lookTarget.copy(cameraRig.currentTarget);
-  cameraRig.lookTarget.x += handheldX * 0.12;
-  cameraRig.lookTarget.y += handheldY * 0.1;
+  cameraRig.lookTarget.x += handheldX * 0.08;
+  cameraRig.lookTarget.y += handheldY * 0.08;
   camera.lookAt(cameraRig.lookTarget);
 
-  modelGroup.rotation.y = THREE.MathUtils.damp(modelGroup.rotation.y, frame.rotationY, 2.8, delta);
+  modelGroup.rotation.y = THREE.MathUtils.damp(modelGroup.rotation.y, frame.rotationY, 2.6, delta);
 
   camera.fov = THREE.MathUtils.damp(camera.fov, frame.fov ?? config.camera.fov, 3.0, delta);
   camera.updateProjectionMatrix();
 
   if (bokehPass) {
-    bokehPass.uniforms.focus.value = THREE.MathUtils.damp(bokehPass.uniforms.focus.value, frame.focus, 2.0, delta);
+    bokehPass.uniforms.focus.value = THREE.MathUtils.damp(bokehPass.uniforms.focus.value, frame.focus, 1.8, delta);
   }
 
   progressBar.style.width = `${desiredScroll * 100}%`;
@@ -211,16 +207,16 @@ function createComposer() {
 
   const bloom = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.012,
-    0.12,
+    0.006,
+    0.10,
     1.0
   );
   composer.addPass(bloom);
 
   bokehPass = new BokehPass(scene, camera, {
     focus: 9,
-    aperture: 0.00003,
-    maxblur: 0.0018
+    aperture: 0.000024,
+    maxblur: 0.0014
   });
   composer.addPass(bokehPass);
 
@@ -240,7 +236,6 @@ function loadGltf(path) {
           loaderScreen.querySelector('p').textContent = 'Carregando modelo 3D';
           return;
         }
-
         const percent = Math.round((event.loaded / event.total) * 100);
         loaderScreen.querySelector('p').textContent = `Carregando modelo 3D — ${percent}%`;
       },
@@ -261,7 +256,6 @@ async function loadCarModel() {
     loaderScreen.classList.add('is-hidden');
   } catch (error) {
     console.error('Erro ao carregar GLB:', error);
-
     loaderScreen.classList.add('has-error');
     loaderScreen.querySelector('p').innerHTML = `
       Erro ao carregar o modelo 3D.<br><br>
@@ -294,7 +288,7 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   composer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.45));
 });
 
 function animate() {

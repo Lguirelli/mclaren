@@ -1,10 +1,10 @@
 {
-  "description": "Keyframes revisados para priorizar a câmera, não a rotação do carro, com traseira 3/4 realmente vindo por trás e sem girar o modelo de forma artificial.",
+  "description": "Ordem de enquadramentos reorganizada para um fluxo mais suave: frente 3/4 baixa -> close frontal -> capô em plongée -> top-down diagonal -> plano aberto traseiro -> traseira 3/4 baixa final.",
   "camera": {
     "fov": 33,
     "near": 0.1,
     "far": 250,
-    "smoothness": 0.072
+    "smoothness": 0.07
   },
   "model": {
     "rotationY": -0.18,
@@ -24,110 +24,93 @@
         0.82,
         0.2
       ],
-      "lensFocus": 10.8,
+      "lensFocus": 10.6,
       "fov": 30,
       "modelRotationY": -0.18
     },
     {
-      "progress": 0.18,
-      "shot": "História — capô em plongée",
-      "position": [
-        3.2,
-        4.6,
-        4.6
-      ],
-      "target": [
-        0.95,
-        0.96,
-        0.96
-      ],
-      "lensFocus": 4.6,
-      "fov": 26,
-      "modelRotationY": -0.18
-    },
-    {
-      "progress": 0.36,
+      "progress": 0.2,
       "shot": "Design — close frontal",
       "position": [
-        5.8,
+        5.9,
         1.35,
-        2.05
+        2.25
       ],
       "target": [
-        1.45,
+        1.42,
         0.72,
-        0.45
+        0.42
       ],
-      "lensFocus": 4.1,
-      "fov": 27,
+      "lensFocus": 4.0,
+      "fov": 24.5,
       "modelRotationY": -0.18
     },
     {
-      "progress": 0.58,
+      "progress": 0.4,
+      "shot": "História — capô em plongée",
+      "position": [
+        3.45,
+        4.55,
+        4.85
+      ],
+      "target": [
+        0.96,
+        0.97,
+        0.98
+      ],
+      "lensFocus": 4.8,
+      "fov": 25.8,
+      "modelRotationY": -0.18
+    },
+    {
+      "progress": 0.62,
+      "shot": "Especificações — top-down diagonal",
+      "position": [
+        0.85,
+        8.15,
+        1.75
+      ],
+      "target": [
+        0.05,
+        0.68,
+        0.08
+      ],
+      "lensFocus": 7.8,
+      "fov": 28.5,
+      "modelRotationY": -0.18
+    },
+    {
+      "progress": 0.82,
       "shot": "Legado — aberto e distante",
       "position": [
-        10.8,
-        3.1,
-        13.2
-      ],
-      "target": [
-        0.0,
-        0.72,
-        0.0
-      ],
-      "lensFocus": 16.0,
-      "fov": 36,
-      "modelRotationY": -0.18
-    },
-    {
-      "progress": 0.72,
-      "shot": "Transição — contorno para traseira",
-      "position": [
-        -4.8,
-        1.7,
-        -9.4
+        -6.9,
+        3.4,
+        -11.8
       ],
       "target": [
         -0.25,
         0.72,
-        -0.25
+        -0.22
       ],
-      "lensFocus": 9.5,
-      "fov": 34,
-      "modelRotationY": -0.18
-    },
-    {
-      "progress": 0.84,
-      "shot": "Performance — traseira 3/4 baixa",
-      "position": [
-        -8.8,
-        1.72,
-        -6.9
-      ],
-      "target": [
-        -0.5,
-        0.78,
-        -0.3
-      ],
-      "lensFocus": 8.8,
-      "fov": 32,
+      "lensFocus": 15.0,
+      "fov": 35.5,
       "modelRotationY": -0.18
     },
     {
       "progress": 1.0,
-      "shot": "Especificações — vista aérea diagonal",
+      "shot": "Performance — traseira 3/4 baixa",
       "position": [
-        -1.8,
-        8.5,
-        -2.6
+        -8.5,
+        1.72,
+        -7.05
       ],
       "target": [
-        0.0,
-        0.64,
-        0.0
+        -0.52,
+        0.78,
+        -0.32
       ],
-      "lensFocus": 8.0,
-      "fov": 30,
+      "lensFocus": 8.6,
+      "fov": 31.5,
       "modelRotationY": -0.18
     }
   ]

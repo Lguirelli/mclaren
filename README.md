@@ -1,11 +1,31 @@
-# Patch de correção v2 — conteúdo, iluminação e câmera
+# Patch v3 — visual mais cinematográfico e nova ordem de enquadramentos
 
-Este patch corrige quatro pontos do repositório publicado no GitHub Pages:
+Este patch faz duas melhorias principais:
 
-1. substitui o hero genérico pelo texto baseado na pesquisa do carro;
-2. reduz a iluminação estourada;
-3. remove a dependência de qualquer plano de palco visível na base da cena;
-4. corrige a passagem para a traseira 3/4, priorizando movimento de câmera em volta do carro, sem girar o modelo de forma artificial.
+1. escurece e refina a cena para um visual mais cinematográfico;
+2. reorganiza a ordem dos enquadramentos para um movimento de câmera mais suave entre as seções,
+   mantendo o primeiro plano como regra.
+
+## Nova ordem de enquadramentos
+
+```txt
+1. Hero — frente 3/4 baixa
+2. Design — close frontal
+3. História — capô em plongée
+4. Especificações — top-down diagonal
+5. Legado — plano aberto e distante
+6. Performance — traseira 3/4 baixa
+```
+
+## O que mudou no visual
+
+- exposição reduzida;
+- bloom quase imperceptível;
+- luz principal mais suave;
+- luz de recorte mais discreta;
+- ambiente mais escuro e contrastado;
+- overlay fixo com vignette para sensação mais cinematográfica;
+- movimento de mouse menos agressivo.
 
 ## Arquivos do patch
 
@@ -14,26 +34,6 @@ index.html
 src/main.js
 src/styles.css
 config/cameraPath.json
+config/landingSections.json
 README.md
 ```
-
-## O que mudou tecnicamente
-
-- o `main.js` agora extrai apenas o modelo principal `McLaren mp4.5` do GLB;
-- luzes e câmeras embutidas no GLB são removidas antes de inserir o carro na cena;
-- exposição, bloom e intensidade das luzes foram reduzidos;
-- o palco inferior visível foi removido da composição;
-- a sequência de keyframes foi reescrita para entregar um plano traseiro 3/4 de verdade.
-
-## Como aplicar
-
-Substitua no repositório estes arquivos:
-
-```txt
-index.html
-src/main.js
-src/styles.css
-config/cameraPath.json
-```
-
-Depois faça commit e push.
