@@ -1012,3 +1012,135 @@ p,
     background: linear-gradient(90deg, var(--car-red), var(--car-gold));
   }
 }
+
+
+/* =========================================================
+   V7 — títulos brancos, sem box visível e sombra limpa
+   ========================================================= */
+
+/* Títulos voltam para branco. O vermelho fica apenas como acento visual. */
+h1,
+h2,
+h1::first-letter,
+h2::first-letter {
+  color: var(--car-white);
+}
+
+/* Remove qualquer aparência de card/box herdada dos patches anteriores */
+.panel-copy,
+.panel-copy-hero,
+.panel-copy-right,
+.panel-copy-center,
+.panel-copy-wide {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+}
+
+/* A divisão visual agora é só uma sombra/névoa atrás do texto, sem borda e sem retângulo */
+.panel-copy::before,
+.panel-copy-hero::before,
+.panel-copy-right::before,
+.panel-copy-center::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Sombra assimétrica para blocos à esquerda */
+.panel-copy::before,
+.panel-copy-hero::before {
+  inset: -2.2rem -3.2rem -2.2rem -2.6rem;
+  background:
+    radial-gradient(ellipse at 32% 48%,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.62) 34%,
+      rgba(0, 0, 0, 0.30) 56%,
+      rgba(0, 0, 0, 0) 76%);
+}
+
+/* Sombra assimétrica para blocos à direita */
+.panel-copy-right::before {
+  inset: -2.2rem -2.6rem -2.2rem -3.2rem;
+  background:
+    radial-gradient(ellipse at 68% 48%,
+      rgba(0, 0, 0, 0.84) 0%,
+      rgba(0, 0, 0, 0.64) 34%,
+      rgba(0, 0, 0, 0.30) 56%,
+      rgba(0, 0, 0, 0) 76%);
+}
+
+/* Sombra para blocos centrais, sem cara de caixa */
+.panel-copy-center::before,
+.panel-end .panel-copy::before {
+  inset: -2.4rem -3.4rem;
+  background:
+    radial-gradient(ellipse at 50% 50%,
+      rgba(0, 0, 0, 0.86) 0%,
+      rgba(0, 0, 0, 0.66) 36%,
+      rgba(0, 0, 0, 0.32) 58%,
+      rgba(0, 0, 0, 0) 78%);
+}
+
+/* Remove caixas dos cards técnicos e métricas */
+.stat-grid li,
+.spec-grid div {
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Acentos vermelhos discretos em vez de título vermelho */
+h1 strong,
+h2 strong,
+.accent-red {
+  color: var(--car-red);
+}
+
+.kicker {
+  color: var(--car-gold);
+}
+
+/* Texto mais confortável visualmente */
+p,
+.lead,
+.lead-small,
+.bullet-list {
+  color: rgba(247, 242, 234, 0.84);
+}
+
+h1,
+h2 {
+  text-shadow:
+    0 0.08rem 0.08rem rgba(0, 0, 0, 0.94),
+    0 0.85rem 2.4rem rgba(0, 0, 0, 0.86),
+    0 0 2.7rem rgba(0, 0, 0, 0.64);
+}
+
+/* Garante que links/decorações não criem caixas aparentes */
+.panel-copy * {
+  background-clip: padding-box;
+}
+
+/* Mobile: sombra continua difusa, sem card */
+@media (max-width: 900px) {
+  .panel-copy::before,
+  .panel-copy-hero::before,
+  .panel-copy-right::before,
+  .panel-copy-center::before,
+  .panel-end .panel-copy::before {
+    inset: -1.5rem -1.1rem;
+    background:
+      radial-gradient(ellipse at 50% 50%,
+        rgba(0, 0, 0, 0.88) 0%,
+        rgba(0, 0, 0, 0.66) 42%,
+        rgba(0, 0, 0, 0.28) 64%,
+        rgba(0, 0, 0, 0) 82%);
+  }
+}
