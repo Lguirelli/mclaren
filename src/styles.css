@@ -1382,3 +1382,33 @@ p,
     white-space: pre;
   }
 }
+
+
+/* =========================================================
+   V10 — título da seção central em exatamente 2 linhas
+   ========================================================= */
+
+.two-line-title {
+  max-width: none !important;
+  width: max-content;
+  max-width: min(100%, 48rem) !important;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center !important;
+}
+
+.two-line-title span {
+  display: block;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .two-line-title {
+    width: 100%;
+    max-width: 100% !important;
+  }
+
+  .two-line-title span {
+    white-space: normal;
+  }
+}
