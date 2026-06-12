@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>McLaren MP4/5 — Cinematic Scroll</title>
+    <meta name="description" content="Experiência cinematográfica em Three.js com câmera controlada pelo scroll." />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="webgl"></canvas>
+
+    <main class="page-content" aria-label="Conteúdo da experiência">
+      <section class="panel panel-hero">
+        <p class="kicker">McLaren MP4/5</p>
+        <h1>Uma sequência guiada por enquadramentos automotivos</h1>
+        <p>
+          Role a página para percorrer uma série de composições inspiradas nas referências enviadas,
+          variando entre plano aberto, close frontal, detalhe de capô, traseira dramática e vista aérea.
+        </p>
+      </section>
+
+      <section class="panel panel-side">
+        <p class="kicker">Cena 01</p>
+        <h2>Frente 3/4 baixa</h2>
+        <p>Entrada com o carro inteiro em quadro, linguagem de editorial noturno e presença forte no chão.</p>
+      </section>
+
+      <section class="panel panel-side panel-right">
+        <p class="kicker">Cena 02</p>
+        <h2>Capô em plongée</h2>
+        <p>Transição para uma visão superior aproximada, destacando nariz, capô e assinatura frontal.</p>
+      </section>
+
+      <section class="panel panel-side">
+        <p class="kicker">Cena 03</p>
+        <h2>Close frontal</h2>
+        <p>Plano comprimido na quina dianteira, com foco em farol, entrada de ar e superfície da carroceria.</p>
+      </section>
+
+      <section class="panel panel-side panel-right">
+        <p class="kicker">Cena 04</p>
+        <h2>Plano aberto distante</h2>
+        <p>O carro recua no quadro para ganhar escala e respiro, como uma cena contemplativa de estrada.</p>
+      </section>
+
+      <section class="panel panel-side">
+        <p class="kicker">Cena 05</p>
+        <h2>Traseira 3/4 dramática</h2>
+        <p>Plano baixo e centralizado inspirado em estacionamento, com leitura forte de volume e stance.</p>
+      </section>
+
+      <section class="panel panel-end">
+        <p class="kicker">Cena 06</p>
+        <h2>Vista aérea diagonal</h2>
+        <p>Fechamento com top-down gráfico, explorando linhas do carro e ocupação limpa do espaço.</p>
+      </section>
+    </main>
+
+    <div class="scroll-progress" aria-hidden="true"><span></span></div>
+    <div class="loader" id="loader">
+      <span></span>
+      <p>Carregando modelo 3D</p>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
