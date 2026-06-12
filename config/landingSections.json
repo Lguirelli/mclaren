@@ -1,99 +1,99 @@
 {
-  "description": "Conteúdo estruturado para encaixar cada seção da landing page ao movimento e à posição do carro no scroll.",
+  "description": "Pesquisa estruturada para acompanhar os keyframes e a posição do carro na tela.",
   "sections": [
     {
-      "progress": 0,
+      "progress": 0.0,
       "id": "hero",
       "camera": "frente 3/4 baixa",
-      "screenPosition": "carro grande, dominante, centro/lateral",
+      "car_position": "carro grande, dominante, com leitura completa da frente e lateral",
       "title": "McLaren MP4/5",
-      "subtitle": "A Fórmula 1 em seu ponto de transição: potência aspirada, precisão aerodinâmica e presença histórica.",
-      "contentFocus": [
+      "subtitle": "A Fórmula 1 em seu ponto de transição: potência aspirada, precisão aerodinâmica e uma das rivalidades mais intensas da história.",
+      "layout": "texto à esquerda ou sobre área negativa; carro ocupando centro/direita",
+      "content_focus": [
         "nome do carro",
-        "temporada 1989",
+        "impacto visual",
         "números rápidos",
-        "CTA explorar modelo 3D"
-      ],
-      "visualInstruction": "Manter textos em área lateral livre para não cobrir bico, asa e cockpit."
+        "CTA para explorar"
+      ]
     },
     {
       "progress": 0.18,
       "id": "historia",
       "camera": "capô em plongée",
-      "screenPosition": "detalhe frontal ocupando o quadro",
+      "car_position": "detalhe superior da frente e capô",
       "title": "O fim da era turbo. O início de uma nova linguagem.",
-      "subtitle": "O MP4/5 nasceu quando a Fórmula 1 passou a extrair performance dos motores aspirados de 3.5 litros.",
-      "contentFocus": [
-        "contexto de 1989",
-        "fim dos turbos",
-        "McLaren-Honda",
-        "Senna e Prost"
-      ],
-      "visualInstruction": "Usar texto curto e mais editorial, porque o carro estará próximo e o quadro terá pouco respiro."
+      "subtitle": "O MP4/5 nasceu no momento em que a Fórmula 1 precisou reaprender a extrair performance sem a força bruta dos turbos.",
+      "layout": "texto curto em lateral oposta ao maior volume do carro",
+      "content_focus": [
+        "1989",
+        "mudança de regulamento",
+        "motor aspirado",
+        "McLaren-Honda"
+      ]
     },
     {
       "progress": 0.36,
       "id": "design",
       "camera": "close frontal",
-      "screenPosition": "asa, bico, suspensão e frente em destaque",
+      "car_position": "asa dianteira, bico e suspensão em destaque",
       "title": "Baixo, largo e funcional.",
       "subtitle": "Cada superfície existe para responder a uma necessidade de pista: entrada de ar, pressão aerodinâmica, refrigeração e estabilidade.",
-      "contentFocus": [
+      "layout": "texto menor e mais técnico, evitando cobrir o close frontal",
+      "content_focus": [
         "design exterior",
-        "proporção baixa",
+        "frente baixa",
         "asa dianteira",
-        "tomada de ar",
-        "rodas expostas"
-      ],
-      "visualInstruction": "Texto pode ficar do lado oposto ao close, com bullets curtos."
+        "bico alongado"
+      ]
     },
     {
       "progress": 0.58,
       "id": "legado",
       "camera": "plano aberto distante",
-      "screenPosition": "carro menor, com mais respiro visual",
+      "car_position": "carro menor no quadro, com respiro visual",
       "title": "Um carro campeão em uma temporada de tensão.",
-      "subtitle": "O MP4/5 venceu, mas também ficou marcado pela rivalidade entre Senna e Prost.",
-      "contentFocus": [
-        "10 vitórias em 16 GPs",
+      "subtitle": "O MP4/5 venceu, mas também ficou marcado pelo contexto humano e esportivo da rivalidade entre Senna e Prost.",
+      "layout": "texto pode ocupar mais espaço, porque o carro está distante",
+      "content_focus": [
+        "10 vitórias",
         "título de construtores",
-        "título de pilotos",
-        "rivalidade histórica"
-      ],
-      "visualInstruction": "Aproveitar o respiro do plano aberto para um bloco narrativo maior."
+        "Senna",
+        "Prost",
+        "legado"
+      ]
     },
     {
       "progress": 0.8,
       "id": "performance",
       "camera": "traseira 3/4 baixa",
-      "screenPosition": "volume traseiro, asa e sensação de potência",
+      "car_position": "volume traseiro, asa e sensação de potência",
       "title": "V10 aspirado. 13.000 rpm. 500 kg.",
-      "subtitle": "O conjunto Honda RA109E transformou a nova era aspirada em domínio competitivo.",
-      "contentFocus": [
-        "motor Honda RA109E",
+      "subtitle": "O MP4/5 transformou a nova era aspirada da Fórmula 1 em domínio competitivo.",
+      "layout": "números grandes próximos da traseira, sem bloquear asa e rodas",
+      "content_focus": [
+        "Honda RA109E",
+        "V10 aspirado",
         "685 ps",
-        "3.490 cc",
-        "câmbio manual de 6 marchas",
-        "chassi de fibra de carbono"
-      ],
-      "visualInstruction": "Usar cards numéricos para acompanhar a leitura técnica da traseira."
+        "6 marchas",
+        "fibra de carbono"
+      ]
     },
     {
-      "progress": 1,
-      "id": "specs",
+      "progress": 1.0,
+      "id": "especificacoes",
       "camera": "vista aérea diagonal top-down",
-      "screenPosition": "leitura limpa da proporção total",
-      "title": "Especificações técnicas",
-      "subtitle": "A visão aérea fecha a experiência mostrando eixo, largura, proporção e arquitetura geral do carro.",
-      "contentFocus": [
+      "car_position": "leitura limpa da proporção total",
+      "title": "Especificações do McLaren Honda MP4/5",
+      "subtitle": "Dados principais do carro usado na temporada de 1989 da Fórmula 1.",
+      "layout": "tabela técnica abaixo ou ao lado, aproveitando a leitura gráfica top-down",
+      "content_focus": [
         "tabela técnica",
         "dimensões",
-        "peso",
         "motor",
         "transmissão",
+        "peso",
         "pneus"
-      ],
-      "visualInstruction": "Boa seção para tabela, porque o carro fica mais gráfico e menos invasivo na tela."
+      ]
     }
   ]
 }

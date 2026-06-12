@@ -193,3 +193,10 @@ code {
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.78);
 }
+
+.loader.has-error code {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  margin-top: 0.35rem;
+}

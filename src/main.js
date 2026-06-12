@@ -11,6 +11,7 @@ const canvas = document.querySelector('#webgl');
 const loaderScreen = document.querySelector('#loader');
 const progressBar = document.querySelector('.scroll-progress span');
 
+const MODEL_PATH = './assets/mclaren-mp4-5.glb';
 const config = await fetch('./config/cameraPath.json').then((response) => response.json());
 
 const scene = new THREE.Scene();
@@ -232,35 +233,19 @@ function createComposer() {
   return composer;
 }
 
-addLighting();
-addStage();
-
-const gltfLoader = new GLTFLoader();
-
-const MODEL_PATHS = [
-  window.CAR_MODEL_URL,
-  './assets/mclaren-mp4-5.glb'
-].filter(Boolean);
-
-const GITHUB_PAGES_HELP = [
-  'Para GitHub Pages, não deixe o GLB grande dentro do repositório.',
-  'Hospede o arquivo em um storage externo e configure config/modelConfig.js com window.CAR_MODEL_URL.',
-  'Também é possível abrir com ?model=https://.../modelo.glb.',
-  'Se quiser manter o arquivo no repositório, use uma versão otimizada abaixo de 100 MB.'
-].join(' ');
-
-function getModelPathFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('model');
-}
-
 function loadGltf(path) {
+  const gltfLoader = new GLTFLoader();
+
   return new Promise((resolve, reject) => {
     gltfLoader.load(
       path,
       resolve,
       (event) => {
-        if (!event.total) return;
+        if (!event.total) {
+          loaderScreen.querySelector('p').textContent = 'Carregando modelo 3D';
+          return;
+        }
+
         const percent = Math.round((event.loaded / event.total) * 100);
         loaderScreen.querySelector('p').textContent = `Carregando modelo 3D — ${percent}%`;
       },
@@ -270,52 +255,30 @@ function loadGltf(path) {
 }
 
 async function loadCarModel() {
-  const urlModelPath = getModelPathFromUrl();
-  const paths = urlModelPath ? [urlModelPath, ...MODEL_PATHS] : MODEL_PATHS;
-  const tried = [];
+  try {
+    const gltf = await loadGltf(MODEL_PATH);
+    const car = gltf.scene;
 
-  if (!paths.length) {
-    const message = [
-      'Modelo 3D não configurado.',
-      GITHUB_PAGES_HELP
-    ].join(' ');
+    improveMaterials(car);
+    fitModelToScene(car);
+    modelGroup.add(car);
+    modelGroup.rotation.y = modelBaseRotationY;
+    loaderScreen.classList.add('is-hidden');
+  } catch (error) {
+    console.error('Erro ao carregar GLB:', error);
 
-    console.warn(message);
     loaderScreen.classList.add('has-error');
-    loaderScreen.querySelector('p').textContent = message;
-    return;
+    loaderScreen.querySelector('p').innerHTML = `
+      Erro ao carregar o modelo 3D.<br><br>
+      Caminho testado:<br>
+      <code>${MODEL_PATH}</code><br><br>
+      Confira se o arquivo está em <code>assets/mclaren-mp4-5.glb</code> e se o GitHub Pages já terminou o deploy.
+    `;
   }
-
-  for (const path of paths) {
-    try {
-      tried.push(path);
-      const gltf = await loadGltf(path);
-      const car = gltf.scene;
-
-      improveMaterials(car);
-      fitModelToScene(car);
-      modelGroup.add(car);
-      modelGroup.rotation.y = modelBaseRotationY;
-      loaderScreen.classList.add('is-hidden');
-      return;
-    } catch (error) {
-      console.warn(`Falha ao carregar modelo em ${path}`, error);
-    }
-  }
-
-  const message = [
-    'Erro ao carregar o modelo 3D.',
-    'Caminhos testados:',
-    tried.join(', '),
-    GITHUB_PAGES_HELP
-  ].join(' ');
-
-  console.error(message);
-  loaderScreen.classList.add('has-error');
-  loaderScreen.querySelector('p').textContent = message;
 }
 
-loadCarModel();
+addLighting();
+addStage();
 
 const composer = createComposer();
 const firstFrame = interpolateKeyframes(0);
@@ -323,6 +286,8 @@ cameraRig.currentPosition.copy(firstFrame.position);
 cameraRig.currentTarget.copy(firstFrame.target);
 camera.position.copy(firstFrame.position);
 camera.lookAt(firstFrame.target);
+
+loadCarModel();
 
 window.addEventListener('pointermove', (event) => {
   pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
