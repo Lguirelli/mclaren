@@ -28,11 +28,11 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.45));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.46;
+renderer.toneMappingExposure = 0.42;
 renderer.shadowMap.enabled = false;
 
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
-scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.018).texture;
+scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.006).texture;
 
 const camera = new THREE.PerspectiveCamera(
   config.camera.fov,
@@ -167,7 +167,40 @@ function improveMaterials(root) {
     const materials = Array.isArray(child.material) ? child.material : [child.material];
     materials.forEach((material) => {
       if (!material) return;
-      material.envMapIntensity = material.metalness > 0.25 ? 0.16 : 0.1;
+
+      /*
+        O GLB vem com material emissivo em glass_details_mat:
+        emissiveFactor [1,1,1] + KHR_materials_emissive_strength.
+        Isso faz partes do modelo parecerem "acesas" e reduz a percepção
+        da iluminação de 3 pontos. Aqui a emissão é desligada em runtime.
+      */
+      if (material.emissive) {
+        material.emissive.set(0x000000);
+      }
+
+      if ('emissiveIntensity' in material) {
+        material.emissiveIntensity = 0;
+      }
+
+      if ('emissiveMap' in material) {
+        material.emissiveMap = null;
+      }
+
+      /*
+        Reduz a influência do ambiente para que key/fill/rim lights
+        apareçam mais claramente no volume do carro.
+      */
+      material.envMapIntensity = material.metalness > 0.25 ? 0.08 : 0.045;
+
+      /*
+        Mantém o vidro sem brilho emissivo, mas ainda com leitura visual.
+      */
+      if (material.name && material.name.toLowerCase().includes('glass')) {
+        material.opacity = Math.min(material.opacity ?? 0.62, 0.58);
+        material.transparent = true;
+        material.depthWrite = false;
+      }
+
       material.needsUpdate = true;
     });
   });
