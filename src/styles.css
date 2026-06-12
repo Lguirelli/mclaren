@@ -1144,3 +1144,138 @@ h2 {
         rgba(0, 0, 0, 0) 82%);
   }
 }
+
+
+/* =========================================================
+   V8 — correção do corte da sombra atrás do texto
+   ========================================================= */
+
+/*
+  O recorte aparecia porque a sombra ainda era gerada por um gradiente
+  dentro de uma área muito próxima ao bloco de texto. Aqui a sombra vira
+  uma névoa ampla, desfocada e sem borda aparente.
+*/
+
+.panel,
+.panel-copy,
+.panel-copy-hero,
+.panel-copy-right,
+.panel-copy-center,
+.panel-copy-wide {
+  overflow: visible !important;
+}
+
+.panel-copy {
+  position: relative;
+  isolation: isolate;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Remove a sombra retangular antiga */
+.panel-copy::before,
+.panel-copy-hero::before,
+.panel-copy-right::before,
+.panel-copy-center::before,
+.panel-end .panel-copy::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border: 0 !important;
+  border-radius: 50% !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  filter: blur(58px);
+  opacity: 1;
+  transform: translateZ(0);
+}
+
+/* Névoa para blocos à esquerda */
+.panel-copy::before,
+.panel-copy-hero::before {
+  inset: -7rem -8rem -7rem -6rem;
+  background:
+    radial-gradient(ellipse at 42% 50%,
+      rgba(0, 0, 0, 0.78) 0%,
+      rgba(0, 0, 0, 0.64) 28%,
+      rgba(0, 0, 0, 0.38) 46%,
+      rgba(0, 0, 0, 0.16) 62%,
+      rgba(0, 0, 0, 0) 78%);
+}
+
+/* Névoa para blocos à direita */
+.panel-copy-right::before {
+  inset: -7rem -6rem -7rem -8rem;
+  background:
+    radial-gradient(ellipse at 58% 50%,
+      rgba(0, 0, 0, 0.80) 0%,
+      rgba(0, 0, 0, 0.66) 28%,
+      rgba(0, 0, 0, 0.40) 46%,
+      rgba(0, 0, 0, 0.16) 62%,
+      rgba(0, 0, 0, 0) 78%);
+}
+
+/* Névoa para blocos centrais */
+.panel-copy-center::before,
+.panel-end .panel-copy::before {
+  inset: -7rem -9rem;
+  background:
+    radial-gradient(ellipse at 50% 50%,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.68) 30%,
+      rgba(0, 0, 0, 0.42) 48%,
+      rgba(0, 0, 0, 0.18) 64%,
+      rgba(0, 0, 0, 0) 80%);
+}
+
+/* Reforço de leitura feito no próprio texto, não em box */
+h1,
+h2 {
+  text-shadow:
+    0 0.08rem 0.08rem rgba(0, 0, 0, 0.96),
+    0 0.55rem 1.6rem rgba(0, 0, 0, 0.88),
+    0 0 3.2rem rgba(0, 0, 0, 0.72);
+}
+
+p,
+.lead,
+.lead-small,
+.bullet-list,
+.stat-grid span,
+.spec-grid span,
+.stat-grid strong,
+.spec-grid strong {
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.88),
+    0 0.45rem 1.15rem rgba(0, 0, 0, 0.78),
+    0 0 2rem rgba(0, 0, 0, 0.62);
+}
+
+/* Remove qualquer resquício visual de card nas listas e specs */
+.stat-grid li,
+.spec-grid div {
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Mobile: névoa menor, ainda sem corte */
+@media (max-width: 900px) {
+  .panel-copy::before,
+  .panel-copy-hero::before,
+  .panel-copy-right::before,
+  .panel-copy-center::before,
+  .panel-end .panel-copy::before {
+    inset: -4.8rem -3.8rem;
+    filter: blur(42px);
+    border-radius: 50% !important;
+    background:
+      radial-gradient(ellipse at 50% 50%,
+        rgba(0, 0, 0, 0.84) 0%,
+        rgba(0, 0, 0, 0.68) 34%,
+        rgba(0, 0, 0, 0.34) 58%,
+        rgba(0, 0, 0, 0) 80%);
+  }
+}
