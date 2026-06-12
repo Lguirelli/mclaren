@@ -1412,3 +1412,156 @@ p,
     white-space: normal;
   }
 }
+
+
+/* =========================================================
+   V11 — remove seção vazia extra e ajusta marcadores das listas
+   ========================================================= */
+
+/*
+  O espaço vazio no final vinha do body com altura mínima maior
+  do que a soma real das seções. Agora quem define a altura são
+  as próprias sections.
+*/
+body {
+  min-height: auto !important;
+}
+
+.page-content {
+  min-height: auto;
+}
+
+/* Garante que não exista respiro extra depois da última seção */
+.page-content > .panel:last-child {
+  margin-bottom: 0 !important;
+}
+
+/*
+  Marcadores mais próximos do texto.
+  Evita o uso de direction: rtl, que afastava o bullet quando
+  o bloco estava alinhado à direita.
+*/
+.bullet-list,
+.panel-right .bullet-list,
+.panel-copy-right .bullet-list {
+  direction: ltr !important;
+  list-style-position: outside;
+  padding-left: 1.05rem !important;
+  padding-right: 0 !important;
+  margin-top: 1.15rem;
+  width: auto !important;
+  max-width: 34rem;
+}
+
+/* Bloco à direita: lista continua no lado direito, mas com bullets perto */
+.panel-copy-right .bullet-list,
+.panel-right .bullet-list {
+  margin-left: auto;
+  margin-right: 0;
+  text-align: right;
+  text-align-last: right;
+}
+
+/* Aproxima o marcador do conteúdo e mantém proporção */
+.bullet-list li,
+.panel-right .bullet-list li,
+.panel-copy-right .bullet-list li {
+  direction: ltr !important;
+  padding-left: 0.18rem;
+  margin: 0.38rem 0;
+}
+
+/*
+  Para listas à direita, usa grid para manter o ponto proporcionalmente
+  perto do texto sem jogar o marcador para longe.
+*/
+.panel-copy-right .bullet-list,
+.panel-right .bullet-list {
+  list-style: none;
+  padding-left: 0 !important;
+}
+
+.panel-copy-right .bullet-list li,
+.panel-right .bullet-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 0.62rem;
+  align-items: baseline;
+  text-align: right;
+  text-align-last: right;
+}
+
+.panel-copy-right .bullet-list li::after,
+.panel-right .bullet-list li::after {
+  content: "•";
+  color: var(--car-red);
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+/* Listas normais à esquerda mantêm o marcador nativo próximo */
+.panel-copy:not(.panel-copy-right) .bullet-list {
+  list-style: disc;
+}
+
+/* Em seções centrais, bullets ficam proporcionais e centralizados */
+.panel-copy-center .bullet-list,
+.panel-end .bullet-list {
+  list-style: none;
+  padding-left: 0 !important;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  text-align-last: center;
+}
+
+.panel-copy-center .bullet-list li::before,
+.panel-end .bullet-list li::before {
+  content: "•";
+  color: var(--car-red);
+  margin-right: 0.45rem;
+}
+
+/* Mobile: remove qualquer espaço extra e simplifica listas */
+@media (max-width: 900px) {
+  body {
+    min-height: auto !important;
+  }
+
+  .page-content {
+    min-height: auto;
+  }
+
+  .panel,
+  .panel-hero,
+  .panel-side,
+  .panel-right,
+  .panel-end {
+    min-height: 100svh;
+  }
+
+  .bullet-list,
+  .panel-right .bullet-list,
+  .panel-copy-right .bullet-list {
+    list-style: disc;
+    padding-left: 1.1rem !important;
+    padding-right: 0 !important;
+    margin-left: auto;
+    margin-right: auto;
+    width: min(100%, 26rem) !important;
+    text-align: justify;
+    text-align-last: left;
+  }
+
+  .panel-copy-right .bullet-list li,
+  .panel-right .bullet-list li {
+    display: list-item;
+    text-align: justify;
+    text-align-last: left;
+  }
+
+  .panel-copy-right .bullet-list li::after,
+  .panel-right .bullet-list li::after {
+    content: none;
+  }
+}
