@@ -236,22 +236,68 @@ addLighting();
 addStage();
 
 const gltfLoader = new GLTFLoader();
-gltfLoader.load(
+
+const MODEL_PATHS = [
   './assets/mclaren-mp4-5.glb',
-  (gltf) => {
-    const car = gltf.scene;
-    improveMaterials(car);
-    fitModelToScene(car);
-    modelGroup.add(car);
-    modelGroup.rotation.y = modelBaseRotationY;
-    loaderScreen.classList.add('is-hidden');
-  },
-  undefined,
-  (error) => {
-    console.error('Erro ao carregar GLB:', error);
-    loaderScreen.querySelector('p').textContent = 'Erro ao carregar o modelo 3D';
+  './assets/McLaren%20MP4_5%20(blend3_6).glb',
+  './assets/McLaren MP4_5 (blend3_6).glb'
+];
+
+function getModelPathFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('model');
+}
+
+function loadGltf(path) {
+  return new Promise((resolve, reject) => {
+    gltfLoader.load(
+      path,
+      resolve,
+      (event) => {
+        if (!event.total) return;
+        const percent = Math.round((event.loaded / event.total) * 100);
+        loaderScreen.querySelector('p').textContent = `Carregando modelo 3D — ${percent}%`;
+      },
+      reject
+    );
+  });
+}
+
+async function loadCarModel() {
+  const urlModelPath = getModelPathFromUrl();
+  const paths = urlModelPath ? [urlModelPath, ...MODEL_PATHS] : MODEL_PATHS;
+  const tried = [];
+
+  for (const path of paths) {
+    try {
+      tried.push(path);
+      const gltf = await loadGltf(path);
+      const car = gltf.scene;
+
+      improveMaterials(car);
+      fitModelToScene(car);
+      modelGroup.add(car);
+      modelGroup.rotation.y = modelBaseRotationY;
+      loaderScreen.classList.add('is-hidden');
+      return;
+    } catch (error) {
+      console.warn(`Falha ao carregar modelo em ${path}`, error);
+    }
   }
-);
+
+  const message = [
+    'Erro ao carregar o modelo 3D.',
+    'Verifique se o arquivo GLB está em assets/ e se a página está rodando por servidor local.',
+    'No GitHub, arquivos acima de 100 MB precisam de Git LFS ou de uma versão otimizada.',
+    `Caminhos testados: ${tried.join(', ')}`
+  ].join(' ');
+
+  console.error(message);
+  loaderScreen.classList.add('has-error');
+  loaderScreen.querySelector('p').textContent = message;
+}
+
+loadCarModel();
 
 const composer = createComposer();
 const firstFrame = interpolateKeyframes(0);

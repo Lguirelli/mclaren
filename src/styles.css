@@ -180,3 +180,16 @@ code {
   h1,
   h2 { max-width: 10ch; }
 }
+
+
+.loader.has-error {
+  padding: 2rem;
+  text-align: center;
+}
+
+.loader.has-error p {
+  max-width: min(44rem, calc(100vw - 2rem));
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.78);
+}
