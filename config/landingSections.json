@@ -1,0 +1,99 @@
+{
+  "description": "Conteúdo estruturado para encaixar cada seção da landing page ao movimento e à posição do carro no scroll.",
+  "sections": [
+    {
+      "progress": 0,
+      "id": "hero",
+      "camera": "frente 3/4 baixa",
+      "screenPosition": "carro grande, dominante, centro/lateral",
+      "title": "McLaren MP4/5",
+      "subtitle": "A Fórmula 1 em seu ponto de transição: potência aspirada, precisão aerodinâmica e presença histórica.",
+      "contentFocus": [
+        "nome do carro",
+        "temporada 1989",
+        "números rápidos",
+        "CTA explorar modelo 3D"
+      ],
+      "visualInstruction": "Manter textos em área lateral livre para não cobrir bico, asa e cockpit."
+    },
+    {
+      "progress": 0.18,
+      "id": "historia",
+      "camera": "capô em plongée",
+      "screenPosition": "detalhe frontal ocupando o quadro",
+      "title": "O fim da era turbo. O início de uma nova linguagem.",
+      "subtitle": "O MP4/5 nasceu quando a Fórmula 1 passou a extrair performance dos motores aspirados de 3.5 litros.",
+      "contentFocus": [
+        "contexto de 1989",
+        "fim dos turbos",
+        "McLaren-Honda",
+        "Senna e Prost"
+      ],
+      "visualInstruction": "Usar texto curto e mais editorial, porque o carro estará próximo e o quadro terá pouco respiro."
+    },
+    {
+      "progress": 0.36,
+      "id": "design",
+      "camera": "close frontal",
+      "screenPosition": "asa, bico, suspensão e frente em destaque",
+      "title": "Baixo, largo e funcional.",
+      "subtitle": "Cada superfície existe para responder a uma necessidade de pista: entrada de ar, pressão aerodinâmica, refrigeração e estabilidade.",
+      "contentFocus": [
+        "design exterior",
+        "proporção baixa",
+        "asa dianteira",
+        "tomada de ar",
+        "rodas expostas"
+      ],
+      "visualInstruction": "Texto pode ficar do lado oposto ao close, com bullets curtos."
+    },
+    {
+      "progress": 0.58,
+      "id": "legado",
+      "camera": "plano aberto distante",
+      "screenPosition": "carro menor, com mais respiro visual",
+      "title": "Um carro campeão em uma temporada de tensão.",
+      "subtitle": "O MP4/5 venceu, mas também ficou marcado pela rivalidade entre Senna e Prost.",
+      "contentFocus": [
+        "10 vitórias em 16 GPs",
+        "título de construtores",
+        "título de pilotos",
+        "rivalidade histórica"
+      ],
+      "visualInstruction": "Aproveitar o respiro do plano aberto para um bloco narrativo maior."
+    },
+    {
+      "progress": 0.8,
+      "id": "performance",
+      "camera": "traseira 3/4 baixa",
+      "screenPosition": "volume traseiro, asa e sensação de potência",
+      "title": "V10 aspirado. 13.000 rpm. 500 kg.",
+      "subtitle": "O conjunto Honda RA109E transformou a nova era aspirada em domínio competitivo.",
+      "contentFocus": [
+        "motor Honda RA109E",
+        "685 ps",
+        "3.490 cc",
+        "câmbio manual de 6 marchas",
+        "chassi de fibra de carbono"
+      ],
+      "visualInstruction": "Usar cards numéricos para acompanhar a leitura técnica da traseira."
+    },
+    {
+      "progress": 1,
+      "id": "specs",
+      "camera": "vista aérea diagonal top-down",
+      "screenPosition": "leitura limpa da proporção total",
+      "title": "Especificações técnicas",
+      "subtitle": "A visão aérea fecha a experiência mostrando eixo, largura, proporção e arquitetura geral do carro.",
+      "contentFocus": [
+        "tabela técnica",
+        "dimensões",
+        "peso",
+        "motor",
+        "transmissão",
+        "pneus"
+      ],
+      "visualInstruction": "Boa seção para tabela, porque o carro fica mais gráfico e menos invasivo na tela."
+    }
+  ]
+}

@@ -238,10 +238,16 @@ addStage();
 const gltfLoader = new GLTFLoader();
 
 const MODEL_PATHS = [
-  './assets/mclaren-mp4-5.glb',
-  './assets/McLaren%20MP4_5%20(blend3_6).glb',
-  './assets/McLaren MP4_5 (blend3_6).glb'
-];
+  window.CAR_MODEL_URL,
+  './assets/mclaren-mp4-5.glb'
+].filter(Boolean);
+
+const GITHUB_PAGES_HELP = [
+  'Para GitHub Pages, não deixe o GLB grande dentro do repositório.',
+  'Hospede o arquivo em um storage externo e configure config/modelConfig.js com window.CAR_MODEL_URL.',
+  'Também é possível abrir com ?model=https://.../modelo.glb.',
+  'Se quiser manter o arquivo no repositório, use uma versão otimizada abaixo de 100 MB.'
+].join(' ');
 
 function getModelPathFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -268,6 +274,18 @@ async function loadCarModel() {
   const paths = urlModelPath ? [urlModelPath, ...MODEL_PATHS] : MODEL_PATHS;
   const tried = [];
 
+  if (!paths.length) {
+    const message = [
+      'Modelo 3D não configurado.',
+      GITHUB_PAGES_HELP
+    ].join(' ');
+
+    console.warn(message);
+    loaderScreen.classList.add('has-error');
+    loaderScreen.querySelector('p').textContent = message;
+    return;
+  }
+
   for (const path of paths) {
     try {
       tried.push(path);
@@ -287,9 +305,9 @@ async function loadCarModel() {
 
   const message = [
     'Erro ao carregar o modelo 3D.',
-    'Verifique se o arquivo GLB está em assets/ e se a página está rodando por servidor local.',
-    'No GitHub, arquivos acima de 100 MB precisam de Git LFS ou de uma versão otimizada.',
-    `Caminhos testados: ${tried.join(', ')}`
+    'Caminhos testados:',
+    tried.join(', '),
+    GITHUB_PAGES_HELP
   ].join(' ');
 
   console.error(message);
