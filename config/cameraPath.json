@@ -1,69 +1,134 @@
 {
-  "description": "Sequência baseada nas referências enviadas. progress vai de 0 a 1. position é a posição da câmera. target é o ponto que a câmera olha. fov controla a linguagem da lente em cada trecho.",
+  "description": "Keyframes revisados para priorizar a câmera, não a rotação do carro, com traseira 3/4 realmente vindo por trás e sem girar o modelo de forma artificial.",
   "camera": {
-    "fov": 34,
+    "fov": 33,
     "near": 0.1,
     "far": 250,
-    "smoothness": 0.075
+    "smoothness": 0.072
   },
   "model": {
-    "rotationY": -0.28,
+    "rotationY": -0.18,
     "floorOffset": 0
   },
   "keyframes": [
     {
-      "progress": 0,
-      "shot": "Plano 01 — frente 3/4 baixa, carro inteiro",
-      "position": [8.6, 1.9, 7.9],
-      "target": [0.55, 0.88, 0.35],
-      "lensFocus": 11.5,
-      "fov": 31,
+      "progress": 0.0,
+      "shot": "Hero — frente 3/4 baixa",
+      "position": [
+        8.4,
+        1.85,
+        7.5
+      ],
+      "target": [
+        0.65,
+        0.82,
+        0.2
+      ],
+      "lensFocus": 10.8,
+      "fov": 30,
       "modelRotationY": -0.18
     },
     {
       "progress": 0.18,
-      "shot": "Plano 02 — capô em plongée, detalhe frontal",
-      "position": [3.5, 4.7, 4.9],
-      "target": [0.95, 1.02, 1.2],
-      "lensFocus": 4.8,
+      "shot": "História — capô em plongée",
+      "position": [
+        3.2,
+        4.6,
+        4.6
+      ],
+      "target": [
+        0.95,
+        0.96,
+        0.96
+      ],
+      "lensFocus": 4.6,
       "fov": 26,
-      "modelRotationY": -0.06
+      "modelRotationY": -0.18
     },
     {
       "progress": 0.36,
-      "shot": "Plano 03 — close no farol e para-choque dianteiro",
-      "position": [6.1, 1.45, 2.0],
-      "target": [1.55, 0.8, 0.5],
-      "lensFocus": 4.2,
-      "fov": 28,
-      "modelRotationY": 0.02
+      "shot": "Design — close frontal",
+      "position": [
+        5.8,
+        1.35,
+        2.05
+      ],
+      "target": [
+        1.45,
+        0.72,
+        0.45
+      ],
+      "lensFocus": 4.1,
+      "fov": 27,
+      "modelRotationY": -0.18
     },
     {
       "progress": 0.58,
-      "shot": "Plano 04 — aberto e distante, carro pequeno no quadro",
-      "position": [11.4, 3.8, 13.8],
-      "target": [0.0, 0.72, 0.0],
-      "lensFocus": 17,
-      "fov": 37,
-      "modelRotationY": 0.08
+      "shot": "Legado — aberto e distante",
+      "position": [
+        10.8,
+        3.1,
+        13.2
+      ],
+      "target": [
+        0.0,
+        0.72,
+        0.0
+      ],
+      "lensFocus": 16.0,
+      "fov": 36,
+      "modelRotationY": -0.18
     },
     {
-      "progress": 0.8,
-      "shot": "Plano 05 — traseira 3/4 baixa e centralizada",
-      "position": [-1.6, 1.75, -9.8],
-      "target": [0.0, 0.7, -0.25],
-      "lensFocus": 10.8,
-      "fov": 33,
-      "modelRotationY": 3.14
+      "progress": 0.72,
+      "shot": "Transição — contorno para traseira",
+      "position": [
+        -4.8,
+        1.7,
+        -9.4
+      ],
+      "target": [
+        -0.25,
+        0.72,
+        -0.25
+      ],
+      "lensFocus": 9.5,
+      "fov": 34,
+      "modelRotationY": -0.18
     },
     {
-      "progress": 1,
-      "shot": "Plano 06 — vista aérea diagonal top-down",
-      "position": [1.8, 8.9, 2.6],
-      "target": [0.0, 0.62, 0.0],
-      "lensFocus": 8.4,
-      "fov": 29,
-      "modelRotationY": 2.72
+      "progress": 0.84,
+      "shot": "Performance — traseira 3/4 baixa",
+      "position": [
+        -8.8,
+        1.72,
+        -6.9
+      ],
+      "target": [
+        -0.5,
+        0.78,
+        -0.3
+      ],
+      "lensFocus": 8.8,
+      "fov": 32,
+      "modelRotationY": -0.18
+    },
+    {
+      "progress": 1.0,
+      "shot": "Especificações — vista aérea diagonal",
+      "position": [
+        -1.8,
+        8.5,
+        -2.6
+      ],
+      "target": [
+        0.0,
+        0.64,
+        0.0
+      ],
+      "lensFocus": 8.0,
+      "fov": 30,
+      "modelRotationY": -0.18
     }
   ]
 }

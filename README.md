@@ -1,72 +1,39 @@
-# Patch GitHub Pages — McLaren MP4/5 com GLB local otimizado
+# Patch de correção v2 — conteúdo, iluminação e câmera
 
-Este patch foi feito para rodar direto em um repositório no GitHub Pages.
+Este patch corrige quatro pontos do repositório publicado no GitHub Pages:
 
-## O que foi corrigido
+1. substitui o hero genérico pelo texto baseado na pesquisa do carro;
+2. reduz a iluminação estourada;
+3. remove a dependência de qualquer plano de palco visível na base da cena;
+4. corrige a passagem para a traseira 3/4, priorizando movimento de câmera em volta do carro, sem girar o modelo de forma artificial.
 
-- O GLB enviado tinha 104,9 MiB.
-- Ele foi otimizado para 14,0 MiB.
-- O modelo agora fica dentro do próprio repositório em:
-
-```txt
-assets/mclaren-mp4-5.glb
-```
-
-- O `src/main.js` foi ajustado para carregar somente esse caminho local:
+## Arquivos do patch
 
 ```txt
-./assets/mclaren-mp4-5.glb
-```
-
-- Foi adicionado `.nojekyll`, útil para evitar interferências do Jekyll no GitHub Pages.
-- Foi adicionado `config/landingSections.json` para organizar o conteúdo da landing conforme o movimento da câmera.
-
-## Como aplicar
-
-Copie/substitua estes arquivos no seu repositório:
-
-```txt
-assets/mclaren-mp4-5.glb
-config/cameraPath.json
-config/landingSections.json
+index.html
 src/main.js
 src/styles.css
-index.html
-.nojekyll
+config/cameraPath.json
 README.md
 ```
 
-Depois faça o commit e push normalmente:
+## O que mudou tecnicamente
 
-```bash
-git add .
-git commit -m "Fix GitHub Pages GLB loading"
-git push
-```
+- o `main.js` agora extrai apenas o modelo principal `McLaren mp4.5` do GLB;
+- luzes e câmeras embutidas no GLB são removidas antes de inserir o carro na cena;
+- exposição, bloom e intensidade das luzes foram reduzidos;
+- o palco inferior visível foi removido da composição;
+- a sequência de keyframes foi reescrita para entregar um plano traseiro 3/4 de verdade.
 
-## Importante
+## Como aplicar
 
-Não use Git LFS para este GLB se o objetivo é rodar no GitHub Pages. O arquivo otimizado já está abaixo do limite normal de 100 MiB, então pode ser versionado diretamente no Git.
-
-## Estrutura da landing alinhada ao movimento
+Substitua no repositório estes arquivos:
 
 ```txt
-0.00 — Hero / frente 3/4 baixa
-0.18 — História / capô em plongée
-0.36 — Design / close frontal
-0.58 — Legado / plano aberto distante
-0.80 — Performance / traseira 3/4 baixa
-1.00 — Especificações / vista aérea top-down
+index.html
+src/main.js
+src/styles.css
+config/cameraPath.json
 ```
 
-## Se ainda der erro
-
-1. Confirme se o arquivo existe no GitHub em:
-
-```txt
-assets/mclaren-mp4-5.glb
-```
-
-2. Aguarde o GitHub Pages terminar o deploy.
-3. Abra o DevTools do navegador e veja se o erro é 404.
-4. Confirme se o caminho publicado bate com o caminho do projeto.
+Depois faça commit e push.

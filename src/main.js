@@ -15,8 +15,8 @@ const MODEL_PATH = './assets/mclaren-mp4-5.glb';
 const config = await fetch('./config/cameraPath.json').then((response) => response.json());
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050505);
-scene.fog = new THREE.FogExp2(0x050505, 0.022);
+scene.background = new THREE.Color(0x040404);
+scene.fog = new THREE.FogExp2(0x040404, 0.0105);
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -24,16 +24,15 @@ const renderer = new THREE.WebGLRenderer({
   alpha: false,
   powerPreference: 'high-performance'
 });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.08;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMappingExposure = 0.56;
+renderer.shadowMap.enabled = false;
 
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
-scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.03).texture;
 
 const camera = new THREE.PerspectiveCamera(
   config.camera.fov,
@@ -62,53 +61,30 @@ let bokehPass;
 scene.add(modelGroup);
 
 function addLighting() {
-  const key = new THREE.DirectionalLight(0xfff3df, 5.5);
-  key.position.set(-6, 7, 6);
-  key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
-  key.shadow.camera.near = 0.5;
-  key.shadow.camera.far = 40;
-  key.shadow.camera.left = -12;
-  key.shadow.camera.right = 12;
-  key.shadow.camera.top = 12;
-  key.shadow.camera.bottom = -12;
+  const key = new THREE.DirectionalLight(0xfff2e1, 1.15);
+  key.position.set(-5.4, 4.8, 4.5);
   scene.add(key);
 
-  const rim = new THREE.DirectionalLight(0xd8ebff, 3.2);
-  rim.position.set(7, 3, -7);
+  const rim = new THREE.DirectionalLight(0xd9e7ff, 0.45);
+  rim.position.set(5.8, 2.4, -5.8);
   scene.add(rim);
 
-  const soft = new THREE.HemisphereLight(0xffffff, 0x17110b, 1.2);
+  const soft = new THREE.HemisphereLight(0xffffff, 0x080808, 0.22);
   scene.add(soft);
 
-  const warmStrip = new THREE.RectAreaLight(0xffdec0, 5, 5, 2.2);
-  warmStrip.position.set(0, 4.6, 4.2);
-  warmStrip.lookAt(0, 0, 0);
-  scene.add(warmStrip);
+  const fill = new THREE.RectAreaLight(0xfff5ea, 0.22, 3.0, 1.25);
+  fill.position.set(0, 3.4, 3.0);
+  fill.lookAt(0, 0.7, 0);
+  scene.add(fill);
 }
 
 function addStage() {
-  const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(60, 60),
-    new THREE.MeshStandardMaterial({
-      color: 0x080807,
-      roughness: 0.72,
-      metalness: 0.08
-    })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = config.model.floorOffset ?? 0;
-  floor.receiveShadow = true;
-  scene.add(floor);
-
-  const backdrop = new THREE.Mesh(
-    new THREE.SphereGeometry(70, 48, 24),
-    new THREE.MeshBasicMaterial({
-      color: 0x050505,
-      side: THREE.BackSide
-    })
-  );
-  scene.add(backdrop);
+  const backdrop = new THREE.SphereGeometry(70, 48, 24);
+  const backdropMaterial = new THREE.MeshBasicMaterial({
+    color: 0x030303,
+    side: THREE.BackSide
+  });
+  scene.add(new THREE.Mesh(backdrop, backdropMaterial));
 }
 
 function fitModelToScene(root) {
@@ -125,18 +101,37 @@ function fitModelToScene(root) {
   root.position.y -= fittedBox.min.y - (config.model.floorOffset ?? 0);
 }
 
+function stripHelpers(root) {
+  const toRemove = [];
+  root.traverse((child) => {
+    if (child.isLight || child.isCamera) {
+      toRemove.push(child);
+    }
+  });
+
+  toRemove.forEach((child) => child.parent?.remove(child));
+}
+
+function selectPrimaryModel(root) {
+  const named = root.getObjectByName('McLaren mp4.5');
+  const base = named ?? root;
+  const model = base.clone(true);
+  stripHelpers(model);
+  return model;
+}
+
 function improveMaterials(root) {
   root.traverse((child) => {
     if (!child.isMesh) return;
 
-    child.castShadow = true;
-    child.receiveShadow = true;
+    child.castShadow = false;
+    child.receiveShadow = false;
     child.frustumCulled = false;
 
     const materials = Array.isArray(child.material) ? child.material : [child.material];
     materials.forEach((material) => {
       if (!material) return;
-      material.envMapIntensity = material.metalness > 0.25 ? 1.75 : 1.18;
+      material.envMapIntensity = material.metalness > 0.25 ? 0.24 : 0.14;
       material.needsUpdate = true;
     });
   });
@@ -176,35 +171,35 @@ function interpolateKeyframes(progress) {
 
 function updateSceneFromScroll(delta) {
   desiredScroll = getScrollProgress();
-  smoothScroll = THREE.MathUtils.damp(smoothScroll, desiredScroll, 4.4, delta);
+  smoothScroll = THREE.MathUtils.damp(smoothScroll, desiredScroll, 4.2, delta);
 
   const frame = interpolateKeyframes(smoothScroll);
   cameraRig.desiredPosition.copy(frame.position);
   cameraRig.desiredTarget.copy(frame.target);
 
-  smoothPointer.lerp(pointer, 0.055);
-  const handheldX = smoothPointer.x * 0.16;
-  const handheldY = smoothPointer.y * 0.11;
+  smoothPointer.lerp(pointer, 0.045);
+  const handheldX = smoothPointer.x * 0.07;
+  const handheldY = smoothPointer.y * 0.05;
 
-  cameraRig.currentPosition.lerp(cameraRig.desiredPosition, config.camera.smoothness ?? 0.075);
-  cameraRig.currentTarget.lerp(cameraRig.desiredTarget, config.camera.smoothness ?? 0.075);
+  cameraRig.currentPosition.lerp(cameraRig.desiredPosition, config.camera.smoothness ?? 0.072);
+  cameraRig.currentTarget.lerp(cameraRig.desiredTarget, config.camera.smoothness ?? 0.072);
 
   camera.position.copy(cameraRig.currentPosition);
   camera.position.x += handheldX;
   camera.position.y += handheldY;
 
   cameraRig.lookTarget.copy(cameraRig.currentTarget);
-  cameraRig.lookTarget.x += handheldX * 0.25;
-  cameraRig.lookTarget.y += handheldY * 0.18;
+  cameraRig.lookTarget.x += handheldX * 0.12;
+  cameraRig.lookTarget.y += handheldY * 0.1;
   camera.lookAt(cameraRig.lookTarget);
 
-  modelGroup.rotation.y = THREE.MathUtils.damp(modelGroup.rotation.y, frame.rotationY, 3.2, delta);
+  modelGroup.rotation.y = THREE.MathUtils.damp(modelGroup.rotation.y, frame.rotationY, 2.8, delta);
 
-  camera.fov = THREE.MathUtils.damp(camera.fov, frame.fov ?? config.camera.fov, 3.4, delta);
+  camera.fov = THREE.MathUtils.damp(camera.fov, frame.fov ?? config.camera.fov, 3.0, delta);
   camera.updateProjectionMatrix();
 
   if (bokehPass) {
-    bokehPass.uniforms.focus.value = THREE.MathUtils.damp(bokehPass.uniforms.focus.value, frame.focus, 2.2, delta);
+    bokehPass.uniforms.focus.value = THREE.MathUtils.damp(bokehPass.uniforms.focus.value, frame.focus, 2.0, delta);
   }
 
   progressBar.style.width = `${desiredScroll * 100}%`;
@@ -216,16 +211,16 @@ function createComposer() {
 
   const bloom = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.18,
-    0.42,
-    0.82
+    0.012,
+    0.12,
+    1.0
   );
   composer.addPass(bloom);
 
   bokehPass = new BokehPass(scene, camera, {
     focus: 9,
-    aperture: 0.00014,
-    maxblur: 0.006
+    aperture: 0.00003,
+    maxblur: 0.0018
   });
   composer.addPass(bokehPass);
 
@@ -257,7 +252,7 @@ function loadGltf(path) {
 async function loadCarModel() {
   try {
     const gltf = await loadGltf(MODEL_PATH);
-    const car = gltf.scene;
+    const car = selectPrimaryModel(gltf.scene);
 
     improveMaterials(car);
     fitModelToScene(car);
@@ -299,7 +294,7 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   composer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 });
 
 function animate() {
