@@ -16,7 +16,7 @@ const config = await fetch('./config/cameraPath.json').then((response) => respon
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x030303);
-scene.fog = new THREE.FogExp2(0x030303, 0.009);
+scene.fog = new THREE.FogExp2(0x030303, 0.0085);
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -28,11 +28,11 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.45));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.5;
+renderer.toneMappingExposure = 0.46;
 renderer.shadowMap.enabled = false;
 
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
-scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.02).texture;
+scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.018).texture;
 
 const camera = new THREE.PerspectiveCamera(
   config.camera.fov,
@@ -61,21 +61,61 @@ let bokehPass;
 scene.add(modelGroup);
 
 function addLighting() {
-  const key = new THREE.DirectionalLight(0xfff0df, 0.95);
-  key.position.set(-5.4, 4.8, 4.4);
+  /*
+    Iluminação cinematográfica de 3 pontos pensada para o enquadramento inicial:
+    câmera em frente 3/4 baixa, olhando para o lado dianteiro do carro.
+    1) Key light: quente, vinda da frente superior esquerda do quadro.
+    2) Fill light: fria e suave, do lado oposto, para abrir sombras sem achatar.
+    3) Rim light: atrás do carro, para desenhar contorno no airbox, asa e pneus.
+  */
+
+  const keyTarget = new THREE.Object3D();
+  keyTarget.position.set(0.55, 0.84, 0.18);
+  scene.add(keyTarget);
+
+  const fillTarget = new THREE.Object3D();
+  fillTarget.position.set(0.1, 0.72, 0.05);
+  scene.add(fillTarget);
+
+  const rimTarget = new THREE.Object3D();
+  rimTarget.position.set(-0.45, 0.86, -0.18);
+  scene.add(rimTarget);
+
+  const key = new THREE.SpotLight(
+    0xfff0de,
+    2.15,
+    0,
+    THREE.MathUtils.degToRad(30),
+    0.42,
+    1.1
+  );
+  key.position.set(6.4, 4.8, 7.2);
+  key.target = keyTarget;
   scene.add(key);
 
-  const rim = new THREE.DirectionalLight(0xd9e8ff, 0.28);
-  rim.position.set(5.8, 2.6, -5.7);
-  scene.add(rim);
-
-  const soft = new THREE.HemisphereLight(0xffffff, 0x080808, 0.14);
-  scene.add(soft);
-
-  const fill = new THREE.RectAreaLight(0xfff5ea, 0.12, 3.0, 1.25);
-  fill.position.set(0.2, 3.2, 3.2);
-  fill.lookAt(0, 0.7, 0);
+  const fill = new THREE.SpotLight(
+    0xd8e7ff,
+    0.62,
+    0,
+    THREE.MathUtils.degToRad(38),
+    0.5,
+    1.15
+  );
+  fill.position.set(-1.2, 2.2, 6.8);
+  fill.target = fillTarget;
   scene.add(fill);
+
+  const rim = new THREE.SpotLight(
+    0xffffff,
+    1.28,
+    0,
+    THREE.MathUtils.degToRad(28),
+    0.36,
+    1.0
+  );
+  rim.position.set(-7.6, 3.5, -6.6);
+  rim.target = rimTarget;
+  scene.add(rim);
 }
 
 function addStage() {
@@ -127,7 +167,7 @@ function improveMaterials(root) {
     const materials = Array.isArray(child.material) ? child.material : [child.material];
     materials.forEach((material) => {
       if (!material) return;
-      material.envMapIntensity = material.metalness > 0.25 ? 0.18 : 0.12;
+      material.envMapIntensity = material.metalness > 0.25 ? 0.16 : 0.1;
       material.needsUpdate = true;
     });
   });
@@ -207,7 +247,7 @@ function createComposer() {
 
   const bloom = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.006,
+    0.005,
     0.10,
     1.0
   );
