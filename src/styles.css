@@ -1279,3 +1279,106 @@ p,
         rgba(0, 0, 0, 0) 80%);
   }
 }
+
+
+/* =========================================================
+   V9 — seção centralizada com texto central e título equilibrado
+   ========================================================= */
+
+.panel-end,
+.panel-end .panel-copy,
+.panel-end .panel-copy-center,
+.panel-end .panel-copy-wide {
+  text-align: center !important;
+  align-items: center;
+}
+
+.panel-end .kicker,
+.panel-end h1,
+.panel-end h2,
+.panel-end p,
+.panel-end .lead,
+.panel-end .lead-small {
+  text-align: center !important;
+  text-align-last: center !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.panel-end .kicker::after {
+  margin-left: auto;
+  margin-right: auto;
+  background: linear-gradient(90deg, transparent, var(--car-red), var(--car-gold), transparent);
+}
+
+.balanced-title {
+  max-width: 12ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.balanced-title span {
+  display: block;
+}
+
+.panel-end .spec-grid {
+  width: min(44rem, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  justify-items: stretch;
+}
+
+.panel-end .spec-grid div {
+  text-align: center !important;
+  padding-left: 0.85rem;
+  padding-right: 0.85rem;
+}
+
+.panel-end .spec-grid div::before {
+  margin-left: auto;
+  margin-right: auto;
+  background: linear-gradient(90deg, var(--car-red), var(--car-gold));
+}
+
+.panel-end .spec-grid span,
+.panel-end .spec-grid strong {
+  text-align: center;
+}
+
+.panel-end .lead-small {
+  width: min(42rem, 100%);
+  text-align: center !important;
+  text-align-last: center !important;
+}
+
+/* Em telas menores, o título centralizado ganha linhas mais naturais */
+@media (max-width: 900px) {
+  .balanced-title {
+    max-width: 11ch;
+  }
+
+  .panel-end .spec-grid {
+    width: min(30rem, 100%);
+  }
+
+  .panel-end .lead-small {
+    text-align: justify !important;
+    text-align-last: center !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .balanced-title {
+    max-width: 10ch;
+  }
+
+  .balanced-title span {
+    display: inline;
+  }
+
+  .balanced-title span:first-child::after {
+    content: "\A";
+    white-space: pre;
+  }
+}
