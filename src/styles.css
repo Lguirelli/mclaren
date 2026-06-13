@@ -1565,3 +1565,41 @@ body {
     content: none;
   }
 }
+
+
+/* =========================================================
+   V15 — vinheta leve para separar texto e carro
+   ========================================================= */
+
+.cinema-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.18) 58%, rgba(0, 0, 0, 0.40) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.04) 18%, rgba(0, 0, 0, 0.04) 82%, rgba(0, 0, 0, 0.16) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.14) 0%, rgba(0, 0, 0, 0.03) 18%, rgba(0, 0, 0, 0.06) 80%, rgba(0, 0, 0, 0.22) 100%);
+  mix-blend-mode: normal;
+}
+
+#webgl {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.page-content,
+.scroll-progress,
+.loader {
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 900px) {
+  .cinema-overlay {
+    background:
+      radial-gradient(circle at 50% 44%, rgba(0, 0, 0, 0) 26%, rgba(0, 0, 0, 0.22) 58%, rgba(0, 0, 0, 0.46) 100%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.05) 28%, rgba(0, 0, 0, 0.10) 76%, rgba(0, 0, 0, 0.24) 100%);
+  }
+}

@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -12,11 +11,14 @@ const loaderScreen = document.querySelector('#loader');
 const progressBar = document.querySelector('.scroll-progress span');
 
 const MODEL_PATH = './assets/mclaren-mp4-5.glb';
+const STUDIO_PATH = './assets/studio.glb'; // versão otimizada
+
 const config = await fetch('./config/cameraPath.json').then((response) => response.json());
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x030303);
-scene.fog = new THREE.FogExp2(0x030303, 0.0085);
+scene.background = new THREE.Color(0x020202);
+scene.fog = new THREE.FogExp2(0x020202, 0.0075);
+scene.environment = null;
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -28,11 +30,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.45));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.42;
+renderer.toneMappingExposure = 0.34;
 renderer.shadowMap.enabled = false;
-
-const pmremGenerator = new THREE.PMREMGenerator(renderer);
-scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.006).texture;
 
 const camera = new THREE.PerspectiveCamera(
   config.camera.fov,
@@ -52,79 +51,43 @@ const cameraRig = {
 const clock = new THREE.Clock();
 const pointer = new THREE.Vector2(0, 0);
 const smoothPointer = new THREE.Vector2(0, 0);
-let modelGroup = new THREE.Group();
+
+const rootGroup = new THREE.Group();
+const studioGroup = new THREE.Group();
+const modelGroup = new THREE.Group();
+
 let modelBaseRotationY = config.model.rotationY ?? 0;
 let desiredScroll = 0;
 let smoothScroll = 0;
 let bokehPass;
 
-scene.add(modelGroup);
+scene.add(rootGroup);
+rootGroup.add(studioGroup);
+rootGroup.add(modelGroup);
 
-function addLighting() {
-  /*
-    Iluminação cinematográfica de 3 pontos pensada para o enquadramento inicial:
-    câmera em frente 3/4 baixa, olhando para o lado dianteiro do carro.
-    1) Key light: quente, vinda da frente superior esquerda do quadro.
-    2) Fill light: fria e suave, do lado oposto, para abrir sombras sem achatar.
-    3) Rim light: atrás do carro, para desenhar contorno no airbox, asa e pneus.
-  */
+/*
+  Análise visual aplicada:
+  - o retângulo de luzes no chão do studio.glb ocupa aproximadamente:
+    x: -8.91 até 17.85
+    z: -7.13 até 6.83
+  - centro aproximado: x 4.47, z -0.15
+  - altura das barras de luz do chão: y -1.042
 
-  const keyTarget = new THREE.Object3D();
-  keyTarget.position.set(0.55, 0.84, 0.18);
-  scene.add(keyTarget);
+  Em vez de mover o carro para esse centro, o estúdio é recentrado
+  para que o retângulo de luzes fique ao redor da origem.
+  Assim o carro pode permanecer em (0, 0, 0) e encaixa visualmente
+  dentro da moldura luminosa do chão.
+*/
+const STUDIO_CENTER = new THREE.Vector3(4.4699, -1.0423, -0.1495);
 
-  const fillTarget = new THREE.Object3D();
-  fillTarget.position.set(0.1, 0.72, 0.05);
-  scene.add(fillTarget);
-
-  const rimTarget = new THREE.Object3D();
-  rimTarget.position.set(-0.45, 0.86, -0.18);
-  scene.add(rimTarget);
-
-  const key = new THREE.SpotLight(
-    0xfff0de,
-    2.15,
-    0,
-    THREE.MathUtils.degToRad(30),
-    0.42,
-    1.1
-  );
-  key.position.set(6.4, 4.8, 7.2);
-  key.target = keyTarget;
-  scene.add(key);
-
-  const fill = new THREE.SpotLight(
-    0xd8e7ff,
-    0.62,
-    0,
-    THREE.MathUtils.degToRad(38),
-    0.5,
-    1.15
-  );
-  fill.position.set(-1.2, 2.2, 6.8);
-  fill.target = fillTarget;
-  scene.add(fill);
-
-  const rim = new THREE.SpotLight(
-    0xffffff,
-    1.28,
-    0,
-    THREE.MathUtils.degToRad(28),
-    0.36,
-    1.0
-  );
-  rim.position.set(-7.6, 3.5, -6.6);
-  rim.target = rimTarget;
-  scene.add(rim);
-}
-
-function addStage() {
-  const backdrop = new THREE.SphereGeometry(70, 48, 24);
-  const backdropMaterial = new THREE.MeshBasicMaterial({
-    color: 0x020202,
-    side: THREE.BackSide
+function stripHelpers(root) {
+  const toRemove = [];
+  root.traverse((child) => {
+    if (child.isLight || child.isCamera) {
+      toRemove.push(child);
+    }
   });
-  scene.add(new THREE.Mesh(backdrop, backdropMaterial));
+  toRemove.forEach((child) => child.parent?.remove(child));
 }
 
 function fitModelToScene(root) {
@@ -141,14 +104,6 @@ function fitModelToScene(root) {
   root.position.y -= fittedBox.min.y - (config.model.floorOffset ?? 0);
 }
 
-function stripHelpers(root) {
-  const toRemove = [];
-  root.traverse((child) => {
-    if (child.isLight || child.isCamera) toRemove.push(child);
-  });
-  toRemove.forEach((child) => child.parent?.remove(child));
-}
-
 function selectPrimaryModel(root) {
   const named = root.getObjectByName('McLaren mp4.5');
   const model = (named ?? root).clone(true);
@@ -156,7 +111,7 @@ function selectPrimaryModel(root) {
   return model;
 }
 
-function improveMaterials(root) {
+function improveCarMaterials(root) {
   root.traverse((child) => {
     if (!child.isMesh) return;
 
@@ -169,40 +124,121 @@ function improveMaterials(root) {
       if (!material) return;
 
       /*
-        O GLB vem com material emissivo em glass_details_mat:
-        emissiveFactor [1,1,1] + KHR_materials_emissive_strength.
-        Isso faz partes do modelo parecerem "acesas" e reduz a percepção
-        da iluminação de 3 pontos. Aqui a emissão é desligada em runtime.
+        Desliga todas as emissões do carro e elimina a "auto-iluminação".
       */
-      if (material.emissive) {
-        material.emissive.set(0x000000);
-      }
-
-      if ('emissiveIntensity' in material) {
-        material.emissiveIntensity = 0;
-      }
-
-      if ('emissiveMap' in material) {
-        material.emissiveMap = null;
-      }
+      if (material.emissive) material.emissive.set(0x000000);
+      if ('emissiveIntensity' in material) material.emissiveIntensity = 0;
+      if ('emissiveMap' in material) material.emissiveMap = null;
 
       /*
-        Reduz a influência do ambiente para que key/fill/rim lights
-        apareçam mais claramente no volume do carro.
+        Reduz bastante a influência de ambiente/reflexo para que
+        o carro responda principalmente ao cenário do studio.
       */
-      material.envMapIntensity = material.metalness > 0.25 ? 0.08 : 0.045;
+      material.envMapIntensity = material.metalness > 0.25 ? 0.04 : 0.02;
 
-      /*
-        Mantém o vidro sem brilho emissivo, mas ainda com leitura visual.
-      */
       if (material.name && material.name.toLowerCase().includes('glass')) {
-        material.opacity = Math.min(material.opacity ?? 0.62, 0.58);
         material.transparent = true;
+        material.opacity = Math.min(material.opacity ?? 0.62, 0.56);
         material.depthWrite = false;
       }
 
       material.needsUpdate = true;
     });
+  });
+}
+
+function prepareStudioMaterials(root) {
+  root.traverse((child) => {
+    if (!child.isMesh) return;
+
+    child.castShadow = false;
+    child.receiveShadow = false;
+    child.frustumCulled = false;
+
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    materials.forEach((material) => {
+      if (!material) return;
+
+      /*
+        O studio vira o cenário e a fonte de luz.
+        Mantém o material emissivo das barras de LED do próprio studio
+        e remove reflexos desnecessários do restante.
+      */
+      if (material.name && material.name.toLowerCase().includes('led_bar')) {
+        if (material.emissive) material.emissive.setRGB(1.0, 0.9, 0.9);
+        if ('emissiveIntensity' in material) material.emissiveIntensity = 2.4;
+      } else {
+        if ('envMapIntensity' in material) material.envMapIntensity = 0;
+      }
+
+      material.needsUpdate = true;
+    });
+  });
+}
+
+function createStageLightsFromStudio(stageRoot) {
+  const tempPosition = new THREE.Vector3();
+  const tempQuaternion = new THREE.Quaternion();
+  const tempScale = new THREE.Vector3();
+  const targetPosition = new THREE.Vector3();
+  const forward = new THREE.Vector3(0, 0, -1);
+
+  /*
+    Desliga qualquer luz atual do código.
+    A partir daqui, a luz vem apenas do studio.glb:
+    - ponto exportado no arquivo
+    - nós Area.* convertidos em luzes reais
+    - barras emissivas do próprio cenário
+  */
+
+  stageRoot.traverse((child) => {
+    if (child.isLight) {
+      // Se houver luz punctual exportada pelo GLB, ajusta em vez de somar luz demais.
+      child.intensity = child.type === 'PointLight' ? 65 : child.intensity;
+      child.decay = 1.6;
+      child.distance = 28;
+      child.color?.set(0xffffff);
+    }
+  });
+
+  const areaNodes = [];
+  stageRoot.traverse((child) => {
+    if (child.name && child.name.startsWith('Area.')) {
+      areaNodes.push(child);
+    }
+  });
+
+  areaNodes.forEach((node) => {
+    node.updateWorldMatrix(true, false);
+    node.matrixWorld.decompose(tempPosition, tempQuaternion, tempScale);
+
+    const direction = forward.clone().applyQuaternion(tempQuaternion).normalize();
+    targetPosition.copy(tempPosition).add(direction.multiplyScalar(6));
+
+    // Intensidade diferenciada por altura para manter leitura cinematográfica
+    let intensity = 16;
+    let angle = THREE.MathUtils.degToRad(34);
+    let penumbra = 0.62;
+
+    if (tempPosition.y > 7) {
+      intensity = 24;
+      angle = THREE.MathUtils.degToRad(28);
+      penumbra = 0.52;
+    } else if (tempPosition.y > 3) {
+      intensity = 18;
+      angle = THREE.MathUtils.degToRad(32);
+      penumbra = 0.56;
+    } else {
+      intensity = 7;
+      angle = THREE.MathUtils.degToRad(42);
+      penumbra = 0.72;
+    }
+
+    const light = new THREE.SpotLight(0xffffff, intensity, 30, angle, penumbra, 1.35);
+    light.position.copy(tempPosition);
+    light.target.position.copy(targetPosition);
+    scene.add(light);
+    scene.add(light.target);
   });
 }
 
@@ -268,7 +304,12 @@ function updateSceneFromScroll(delta) {
   camera.updateProjectionMatrix();
 
   if (bokehPass) {
-    bokehPass.uniforms.focus.value = THREE.MathUtils.damp(bokehPass.uniforms.focus.value, frame.focus, 1.8, delta);
+    bokehPass.uniforms.focus.value = THREE.MathUtils.damp(
+      bokehPass.uniforms.focus.value,
+      frame.focus,
+      1.8,
+      delta
+    );
   }
 
   progressBar.style.width = `${desiredScroll * 100}%`;
@@ -280,16 +321,22 @@ function createComposer() {
 
   const bloom = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.005,
-    0.10,
+    0.01,
+    0.14,
     1.0
   );
   composer.addPass(bloom);
 
+  /*
+    Simulação de lente mais cinematográfica, com profundidade de campo equivalente
+    a uma abertura bem rasa, inspirada em f/1.2.
+  */
+  const DOF_FSTOP = 1.2;
+
   bokehPass = new BokehPass(scene, camera, {
     focus: 9,
-    aperture: 0.000024,
-    maxblur: 0.0014
+    aperture: 0.00012,
+    maxblur: 0.0026
   });
   composer.addPass(bokehPass);
 
@@ -297,7 +344,7 @@ function createComposer() {
   return composer;
 }
 
-function loadGltf(path) {
+function loadGltf(path, onProgressLabel) {
   const gltfLoader = new GLTFLoader();
 
   return new Promise((resolve, reject) => {
@@ -306,41 +353,61 @@ function loadGltf(path) {
       resolve,
       (event) => {
         if (!event.total) {
-          loaderScreen.querySelector('p').textContent = 'Carregando modelo 3D';
+          loaderScreen.querySelector('p').textContent = onProgressLabel;
           return;
         }
         const percent = Math.round((event.loaded / event.total) * 100);
-        loaderScreen.querySelector('p').textContent = `Carregando modelo 3D — ${percent}%`;
+        loaderScreen.querySelector('p').textContent = `${onProgressLabel} — ${percent}%`;
       },
       reject
     );
   });
 }
 
-async function loadCarModel() {
-  try {
-    const gltf = await loadGltf(MODEL_PATH);
-    const car = selectPrimaryModel(gltf.scene);
+async function loadStudio() {
+  const gltf = await loadGltf(STUDIO_PATH, 'Carregando cenário do estúdio');
+  const stage = gltf.scene;
 
-    improveMaterials(car);
-    fitModelToScene(car);
-    modelGroup.add(car);
-    modelGroup.rotation.y = modelBaseRotationY;
+  prepareStudioMaterials(stage);
+
+  // Recentrar o estúdio para que o retângulo de luzes do chão envolva o carro.
+  stage.position.set(-STUDIO_CENTER.x, -STUDIO_CENTER.y, -STUDIO_CENTER.z);
+
+  studioGroup.add(stage);
+  createStageLightsFromStudio(stage);
+}
+
+async function loadCar() {
+  const gltf = await loadGltf(MODEL_PATH, 'Carregando modelo 3D');
+  const car = selectPrimaryModel(gltf.scene);
+
+  improveCarMaterials(car);
+  fitModelToScene(car);
+
+  // Pequeno lift para o carro “sentar” visualmente dentro do retângulo do chão.
+  car.position.y += 0.02;
+
+  modelGroup.add(car);
+  modelGroup.rotation.y = modelBaseRotationY;
+}
+
+async function bootstrap() {
+  try {
+    await loadStudio();
+    await loadCar();
     loaderScreen.classList.add('is-hidden');
   } catch (error) {
-    console.error('Erro ao carregar GLB:', error);
+    console.error('Erro ao carregar cena:', error);
     loaderScreen.classList.add('has-error');
     loaderScreen.querySelector('p').innerHTML = `
-      Erro ao carregar o modelo 3D.<br><br>
-      Caminho testado:<br>
+      Erro ao carregar a cena 3D.<br><br>
+      Caminhos testados:<br>
+      <code>${STUDIO_PATH}</code><br>
       <code>${MODEL_PATH}</code><br><br>
-      Confira se o arquivo está em <code>assets/mclaren-mp4-5.glb</code> e se o GitHub Pages já terminou o deploy.
+      Confira se os arquivos estão em <code>assets/</code> e se o GitHub Pages já terminou o deploy.
     `;
   }
 }
-
-addLighting();
-addStage();
 
 const composer = createComposer();
 const firstFrame = interpolateKeyframes(0);
@@ -349,7 +416,7 @@ cameraRig.currentTarget.copy(firstFrame.target);
 camera.position.copy(firstFrame.position);
 camera.lookAt(firstFrame.target);
 
-loadCarModel();
+bootstrap();
 
 window.addEventListener('pointermove', (event) => {
   pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
