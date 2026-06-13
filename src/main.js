@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -11,13 +12,13 @@ const loaderScreen = document.querySelector('#loader');
 const progressBar = document.querySelector('.scroll-progress span');
 
 const MODEL_PATH = './assets/mclaren-mp4-5.glb';
-const STUDIO_PATH = './assets/studio.glb'; // versão otimizada
+const STUDIO_PATH = './assets/studio.glb';
 
 const config = await fetch('./config/cameraPath.json').then((response) => response.json());
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x020202);
-scene.fog = new THREE.FogExp2(0x020202, 0.0075);
+scene.fog = new THREE.FogExp2(0x020202, 0.0072);
 scene.environment = null;
 
 const renderer = new THREE.WebGLRenderer({
@@ -66,19 +67,22 @@ rootGroup.add(studioGroup);
 rootGroup.add(modelGroup);
 
 /*
-  Análise visual aplicada:
-  - o retângulo de luzes no chão do studio.glb ocupa aproximadamente:
+  Análise visual do studio.glb:
+  - retângulo de luzes do chão:
     x: -8.91 até 17.85
     z: -7.13 até 6.83
-  - centro aproximado: x 4.47, z -0.15
-  - altura das barras de luz do chão: y -1.042
+  - centro aproximado: x 4.47 / z -0.15
+  - barras de piso em y -1.042
 
-  Em vez de mover o carro para esse centro, o estúdio é recentrado
-  para que o retângulo de luzes fique ao redor da origem.
-  Assim o carro pode permanecer em (0, 0, 0) e encaixa visualmente
-  dentro da moldura luminosa do chão.
+  Para chegar mais perto da referência, o cenário é:
+  1. recentrado no retângulo de luz;
+  2. reduzido de escala para a moldura luminosa envolver o carro,
+     não parecer um galpão grande demais.
 */
 const STUDIO_CENTER = new THREE.Vector3(4.4699, -1.0423, -0.1495);
+const STUDIO_SCALE = 0.62;
+
+studioGroup.scale.setScalar(STUDIO_SCALE);
 
 function stripHelpers(root) {
   const toRemove = [];
@@ -123,22 +127,17 @@ function improveCarMaterials(root) {
     materials.forEach((material) => {
       if (!material) return;
 
-      /*
-        Desliga todas as emissões do carro e elimina a "auto-iluminação".
-      */
+      // Desliga TODA emissão do carro.
       if (material.emissive) material.emissive.set(0x000000);
       if ('emissiveIntensity' in material) material.emissiveIntensity = 0;
       if ('emissiveMap' in material) material.emissiveMap = null;
 
-      /*
-        Reduz bastante a influência de ambiente/reflexo para que
-        o carro responda principalmente ao cenário do studio.
-      */
-      material.envMapIntensity = material.metalness > 0.25 ? 0.04 : 0.02;
+      // Sem iluminação de ambiente falsa no carro.
+      material.envMapIntensity = material.metalness > 0.25 ? 0.035 : 0.018;
 
       if (material.name && material.name.toLowerCase().includes('glass')) {
         material.transparent = true;
-        material.opacity = Math.min(material.opacity ?? 0.62, 0.56);
+        material.opacity = Math.min(material.opacity ?? 0.62, 0.54);
         material.depthWrite = false;
       }
 
@@ -159,15 +158,19 @@ function prepareStudioMaterials(root) {
     materials.forEach((material) => {
       if (!material) return;
 
-      /*
-        O studio vira o cenário e a fonte de luz.
-        Mantém o material emissivo das barras de LED do próprio studio
-        e remove reflexos desnecessários do restante.
-      */
-      if (material.name && material.name.toLowerCase().includes('led_bar')) {
-        if (material.emissive) material.emissive.setRGB(1.0, 0.9, 0.9);
-        if ('emissiveIntensity' in material) material.emissiveIntensity = 2.4;
+      const name = (material.name ?? '').toLowerCase();
+
+      if (name.includes('led_bar')) {
+        /*
+          Mantém as barras do studio.glb visualmente emissivas.
+          Em Three.js, material emissivo não ilumina de verdade outros objetos;
+          por isso as luzes reais são recriadas a partir da posição dessas barras.
+        */
+        if (material.emissive) material.emissive.setRGB(1.0, 0.92, 0.86);
+        if ('emissiveIntensity' in material) material.emissiveIntensity = 3.0;
       } else {
+        if (material.emissive) material.emissive.set(0x000000);
+        if ('emissiveIntensity' in material) material.emissiveIntensity = 0;
         if ('envMapIntensity' in material) material.envMapIntensity = 0;
       }
 
@@ -176,69 +179,60 @@ function prepareStudioMaterials(root) {
   });
 }
 
-function createStageLightsFromStudio(stageRoot) {
-  const tempPosition = new THREE.Vector3();
-  const tempQuaternion = new THREE.Quaternion();
-  const tempScale = new THREE.Vector3();
-  const targetPosition = new THREE.Vector3();
-  const forward = new THREE.Vector3(0, 0, -1);
-
+function createLightsFromStudio(stageRoot) {
   /*
-    Desliga qualquer luz atual do código.
-    A partir daqui, a luz vem apenas do studio.glb:
-    - ponto exportado no arquivo
-    - nós Area.* convertidos em luzes reais
-    - barras emissivas do próprio cenário
+    O GLB traz geometria emissiva, mas WebGL rasterizado não calcula iluminação
+    indireta real a partir de material emissivo. Por isso o patch "puxa" a luz
+    do studio usando a posição das barras led_light_cylinder.*.
   */
+  const worldPosition = new THREE.Vector3();
+
+  stageRoot.updateWorldMatrix(true, true);
 
   stageRoot.traverse((child) => {
+    // Mantém a luz punctual do próprio GLB, mas com intensidade controlada.
     if (child.isLight) {
-      // Se houver luz punctual exportada pelo GLB, ajusta em vez de somar luz demais.
-      child.intensity = child.type === 'PointLight' ? 65 : child.intensity;
-      child.decay = 1.6;
-      child.distance = 28;
-      child.color?.set(0xffffff);
+      child.intensity = 28;
+      child.distance = 16;
+      child.decay = 1.7;
+      child.color?.set(0xfff2e8);
     }
-  });
 
-  const areaNodes = [];
-  stageRoot.traverse((child) => {
-    if (child.name && child.name.startsWith('Area.')) {
-      areaNodes.push(child);
-    }
-  });
+    if (!child.name || !child.name.toLowerCase().includes('led_light_cylinder')) return;
 
-  areaNodes.forEach((node) => {
-    node.updateWorldMatrix(true, false);
-    node.matrixWorld.decompose(tempPosition, tempQuaternion, tempScale);
+    child.getWorldPosition(worldPosition);
 
-    const direction = forward.clone().applyQuaternion(tempQuaternion).normalize();
-    targetPosition.copy(tempPosition).add(direction.multiplyScalar(6));
+    const isOverhead = worldPosition.y > 2.4;
+    const isFloor = !isOverhead;
 
-    // Intensidade diferenciada por altura para manter leitura cinematográfica
-    let intensity = 16;
-    let angle = THREE.MathUtils.degToRad(34);
-    let penumbra = 0.62;
+    if (isFloor) {
+      // Luz real saindo das barras no chão.
+      const floorLight = new THREE.PointLight(0xfff0e4, 5.8, 5.4, 1.75);
+      floorLight.position.set(worldPosition.x, worldPosition.y + 0.18, worldPosition.z);
+      scene.add(floorLight);
 
-    if (tempPosition.y > 7) {
-      intensity = 24;
-      angle = THREE.MathUtils.degToRad(28);
-      penumbra = 0.52;
-    } else if (tempPosition.y > 3) {
-      intensity = 18;
-      angle = THREE.MathUtils.degToRad(32);
-      penumbra = 0.56;
+      // Recorte suave para reforçar a moldura do retângulo de luz.
+      const glow = new THREE.PointLight(0xffffff, 1.4, 7.5, 2.0);
+      glow.position.set(worldPosition.x, worldPosition.y + 0.55, worldPosition.z);
+      scene.add(glow);
     } else {
-      intensity = 7;
-      angle = THREE.MathUtils.degToRad(42);
-      penumbra = 0.72;
-    }
+      // Luz superior real, apontando para o centro do carro.
+      const target = new THREE.Object3D();
+      target.position.set(0, 0.55, 0);
+      scene.add(target);
 
-    const light = new THREE.SpotLight(0xffffff, intensity, 30, angle, penumbra, 1.35);
-    light.position.copy(tempPosition);
-    light.target.position.copy(targetPosition);
-    scene.add(light);
-    scene.add(light.target);
+      const topLight = new THREE.SpotLight(
+        0xfff3e6,
+        18,
+        17,
+        THREE.MathUtils.degToRad(34),
+        0.72,
+        1.55
+      );
+      topLight.position.copy(worldPosition);
+      topLight.target = target;
+      scene.add(topLight);
+    }
   });
 }
 
@@ -321,18 +315,17 @@ function createComposer() {
 
   const bloom = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.01,
+    0.012,
     0.14,
     1.0
   );
   composer.addPass(bloom);
 
   /*
-    Simulação de lente mais cinematográfica, com profundidade de campo equivalente
-    a uma abertura bem rasa, inspirada em f/1.2.
+    Profundidade de campo inspirada em f/1.2.
+    No BokehPass o parâmetro prático é aperture/maxblur, então a abertura é
+    calibrada para parecer rasa sem destruir a leitura do carro.
   */
-  const DOF_FSTOP = 1.2;
-
   bokehPass = new BokehPass(scene, camera, {
     focus: 9,
     aperture: 0.00012,
@@ -346,6 +339,7 @@ function createComposer() {
 
 function loadGltf(path, onProgressLabel) {
   const gltfLoader = new GLTFLoader();
+  gltfLoader.setMeshoptDecoder(MeshoptDecoder);
 
   return new Promise((resolve, reject) => {
     gltfLoader.load(
@@ -370,11 +364,12 @@ async function loadStudio() {
 
   prepareStudioMaterials(stage);
 
-  // Recentrar o estúdio para que o retângulo de luzes do chão envolva o carro.
+  // Recentrar o estúdio para que o retângulo de luzes envolva o carro.
   stage.position.set(-STUDIO_CENTER.x, -STUDIO_CENTER.y, -STUDIO_CENTER.z);
 
   studioGroup.add(stage);
-  createStageLightsFromStudio(stage);
+  studioGroup.updateWorldMatrix(true, true);
+  createLightsFromStudio(stage);
 }
 
 async function loadCar() {
@@ -384,8 +379,8 @@ async function loadCar() {
   improveCarMaterials(car);
   fitModelToScene(car);
 
-  // Pequeno lift para o carro “sentar” visualmente dentro do retângulo do chão.
-  car.position.y += 0.02;
+  // Pequeno ajuste para o carro “sentar” dentro do retângulo luminoso.
+  car.position.y += 0.03;
 
   modelGroup.add(car);
   modelGroup.rotation.y = modelBaseRotationY;

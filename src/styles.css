@@ -1603,3 +1603,19 @@ body {
       linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.05) 28%, rgba(0, 0, 0, 0.10) 76%, rgba(0, 0, 0, 0.24) 100%);
   }
 }
+
+
+/* =========================================================
+   V16 — vinheta com separação suave entre texto, carro e estúdio
+   ========================================================= */
+
+.cinema-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(0, 0, 0, 0) 28%, rgba(0, 0, 0, 0.16) 58%, rgba(0, 0, 0, 0.42) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.035) 22%, rgba(0, 0, 0, 0.035) 78%, rgba(0, 0, 0, 0.18) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.02) 22%, rgba(0, 0, 0, 0.08) 78%, rgba(0, 0, 0, 0.28) 100%);
+}
