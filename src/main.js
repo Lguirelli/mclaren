@@ -76,13 +76,15 @@ rootGroup.add(modelGroup);
 
   Para chegar mais perto da referência, o cenário é:
   1. recentrado no retângulo de luz;
-  2. reduzido de escala para a moldura luminosa envolver o carro,
-     não parecer um galpão grande demais.
+  2. girado 90 graus para alinhar o retângulo luminoso com o enquadramento;
+  3. reduzido de escala para a moldura luminosa envolver o carro,
+     deixando as barras de luz mais próximas da carroceria.
 */
 const STUDIO_CENTER = new THREE.Vector3(4.4699, -1.0423, -0.1495);
-const STUDIO_SCALE = 0.62;
+const STUDIO_SCALE = 0.42;
 
 studioGroup.scale.setScalar(STUDIO_SCALE);
+studioGroup.rotation.y = Math.PI * 0.5;
 
 function stripHelpers(root) {
   const toRemove = [];
