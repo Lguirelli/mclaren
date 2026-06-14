@@ -38,7 +38,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.45));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.34;
+renderer.toneMappingExposure = 0.48;
 renderer.shadowMap.enabled = false;
 
 const camera = new THREE.PerspectiveCamera(
@@ -70,6 +70,14 @@ let bokehPass;
 
 scene.add(modelRoot);
 modelRoot.add(modelLightRig);
+
+/*
+  Preenchimento global muito sutil.
+  Ele não substitui as luzes do GLB, apenas evita que o ambiente fique
+  completamente esmagado no preto em monitores mais escuros.
+*/
+const softAmbientFill = new THREE.HemisphereLight(0xffffff, 0x050505, 0.18);
+scene.add(softAmbientFill);
 
 function removeExternalLights(root) {
   /*
@@ -121,7 +129,7 @@ function prepareSingleModelMaterials(root) {
         Sem luz de ambiente externa. Mantém só um reflexo mínimo para leitura de
         materiais metálicos, sem substituir as luzes do modelo.
       */
-      material.envMapIntensity = material.metalness > 0.25 ? 0.025 : 0.01;
+      material.envMapIntensity = material.metalness > 0.25 ? 0.055 : 0.025;
 
       if (name.includes('glass')) {
         material.transparent = true;
@@ -167,7 +175,7 @@ function createLightsFromModelBars(root) {
   });
 
   floorBars.forEach((position) => {
-    const light = new THREE.PointLight(0xfff0e3, 1.725, 3.4, 2.15);
+    const light = new THREE.PointLight(0xfff0e3, 2.05, 4.8, 1.9);
     light.position.set(position.x, position.y + 0.18, position.z);
     modelLightRig.add(light);
   });
@@ -181,8 +189,8 @@ function createLightsFromModelBars(root) {
 
     const light = new THREE.SpotLight(
       0xfff2e8,
-      3.9,
-      9.5,
+      4.4,
+      12.0,
       THREE.MathUtils.degToRad(36),
       0.78,
       2.0
@@ -197,7 +205,7 @@ function createLightsFromModelBars(root) {
     Núcleo muito leve, derivado do rig do modelo, apenas para evitar que o carro
     desapareça completamente entre as barras de luz. Mantido dentro do modelLightRig.
   */
-  const softCore = new THREE.PointLight(0xffffff, 0.42, 5.2, 2.25);
+  const softCore = new THREE.PointLight(0xffffff, 0.72, 6.8, 2.1);
   softCore.position.set(0, 1.1, 0);
   modelLightRig.add(softCore);
 }
