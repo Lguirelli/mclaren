@@ -55,6 +55,7 @@ const smoothPointer = new THREE.Vector2(0, 0);
 
 const rootGroup = new THREE.Group();
 const studioGroup = new THREE.Group();
+const lightRig = new THREE.Group();
 const modelGroup = new THREE.Group();
 
 let modelBaseRotationY = config.model.rotationY ?? 0;
@@ -64,6 +65,7 @@ let bokehPass;
 
 scene.add(rootGroup);
 rootGroup.add(studioGroup);
+studioGroup.add(lightRig);
 rootGroup.add(modelGroup);
 
 /*
@@ -85,6 +87,7 @@ const STUDIO_SCALE = 0.42;
 
 studioGroup.scale.setScalar(STUDIO_SCALE);
 studioGroup.rotation.y = Math.PI * 0.5;
+modelGroup.position.set(0.16, 0, -0.10);
 
 function stripHelpers(root) {
   const toRemove = [];
@@ -183,57 +186,68 @@ function prepareStudioMaterials(root) {
 
 function createLightsFromStudio(stageRoot) {
   /*
-    O GLB traz geometria emissiva, mas WebGL rasterizado não calcula iluminação
-    indireta real a partir de material emissivo. Por isso o patch "puxa" a luz
-    do studio usando a posição das barras led_light_cylinder.*.
+    As luzes agora ficam presas ao lightRig, que é filho do studioGroup.
+    Assim rotação, escala e reposicionamento do estúdio afetam cenário e luzes juntos.
   */
+  while (lightRig.children.length) {
+    const child = lightRig.children.pop();
+    if (child.target && child.target.parent) child.target.parent.remove(child.target);
+    lightRig.remove(child);
+  }
+
   const worldPosition = new THREE.Vector3();
+  const localPosition = new THREE.Vector3();
 
   stageRoot.updateWorldMatrix(true, true);
+  studioGroup.updateWorldMatrix(true, true);
 
   stageRoot.traverse((child) => {
-    // Mantém a luz punctual do próprio GLB, mas com intensidade controlada.
+    // Mantém a luz punctual do próprio GLB, mas reancorada no rig.
     if (child.isLight) {
-      child.intensity = 28;
-      child.distance = 16;
-      child.decay = 1.7;
-      child.color?.set(0xfff2e8);
+      child.getWorldPosition(worldPosition);
+      localPosition.copy(worldPosition);
+      studioGroup.worldToLocal(localPosition);
+
+      const point = new THREE.PointLight(0xfff2e8, 24, 14, 1.7);
+      point.position.copy(localPosition);
+      lightRig.add(point);
     }
 
     if (!child.name || !child.name.toLowerCase().includes('led_light_cylinder')) return;
 
     child.getWorldPosition(worldPosition);
+    localPosition.copy(worldPosition);
+    studioGroup.worldToLocal(localPosition);
 
     const isOverhead = worldPosition.y > 2.4;
     const isFloor = !isOverhead;
 
     if (isFloor) {
-      // Luz real saindo das barras no chão.
-      const floorLight = new THREE.PointLight(0xfff0e4, 5.8, 5.4, 1.75);
-      floorLight.position.set(worldPosition.x, worldPosition.y + 0.18, worldPosition.z);
-      scene.add(floorLight);
+      // Luz real saindo das barras do chão, agora no mesmo espaço do estúdio.
+      const floorLight = new THREE.PointLight(0xfff0e4, 5.8, 4.6, 1.75);
+      floorLight.position.set(localPosition.x, localPosition.y + 0.18, localPosition.z);
+      lightRig.add(floorLight);
 
-      // Recorte suave para reforçar a moldura do retângulo de luz.
-      const glow = new THREE.PointLight(0xffffff, 1.4, 7.5, 2.0);
-      glow.position.set(worldPosition.x, worldPosition.y + 0.55, worldPosition.z);
-      scene.add(glow);
+      const glow = new THREE.PointLight(0xffffff, 1.25, 6.2, 2.0);
+      glow.position.set(localPosition.x, localPosition.y + 0.52, localPosition.z);
+      lightRig.add(glow);
     } else {
-      // Luz superior real, apontando para o centro do carro.
+      // Luz superior apontando para o centro do carro, também dentro do rig.
       const target = new THREE.Object3D();
-      target.position.set(0, 0.55, 0);
-      scene.add(target);
+      target.position.set(0.16, 0.55, -0.10);
+      lightRig.add(target);
 
       const topLight = new THREE.SpotLight(
         0xfff3e6,
         18,
-        17,
+        16,
         THREE.MathUtils.degToRad(34),
         0.72,
         1.55
       );
-      topLight.position.copy(worldPosition);
+      topLight.position.copy(localPosition);
       topLight.target = target;
-      scene.add(topLight);
+      lightRig.add(topLight);
     }
   });
 }
