@@ -11,14 +11,21 @@ const canvas = document.querySelector('#webgl');
 const loaderScreen = document.querySelector('#loader');
 const progressBar = document.querySelector('.scroll-progress span');
 
-const MODEL_PATH = './assets/mclaren-mp4-5.glb';
-const STUDIO_PATH = './assets/studio.glb';
+const MODEL_PATH = './assets/mclaren.glb';
 
 const config = await fetch('./config/cameraPath.json').then((response) => response.json());
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x020202);
-scene.fog = new THREE.FogExp2(0x020202, 0.0072);
+scene.fog = new THREE.FogExp2(0x020202, 0.0075);
+
+/*
+  V20:
+  - o projeto passa a usar apenas um GLB: assets/mclaren.glb;
+  - removidos os carregamentos separados de carro e studio;
+  - removidas as luzes fixas anteriores do código;
+  - a iluminação real é derivada somente das barras de luz que existem dentro do próprio GLB.
+*/
 scene.environment = null;
 
 const renderer = new THREE.WebGLRenderer({
@@ -53,74 +60,35 @@ const clock = new THREE.Clock();
 const pointer = new THREE.Vector2(0, 0);
 const smoothPointer = new THREE.Vector2(0, 0);
 
-const rootGroup = new THREE.Group();
-const studioGroup = new THREE.Group();
-const lightRig = new THREE.Group();
-const modelGroup = new THREE.Group();
+const modelRoot = new THREE.Group();
+const modelLightRig = new THREE.Group();
 
 let modelBaseRotationY = config.model.rotationY ?? 0;
 let desiredScroll = 0;
 let smoothScroll = 0;
 let bokehPass;
 
-scene.add(rootGroup);
-rootGroup.add(studioGroup);
-studioGroup.add(lightRig);
-rootGroup.add(modelGroup);
+scene.add(modelRoot);
+modelRoot.add(modelLightRig);
 
-/*
-  Análise visual do studio.glb:
-  - retângulo de luzes do chão:
-    x: -8.91 até 17.85
-    z: -7.13 até 6.83
-  - centro aproximado: x 4.47 / z -0.15
-  - barras de piso em y -1.042
-
-  Para chegar mais perto da referência, o cenário é:
-  1. recentrado no retângulo de luz;
-  2. girado 90 graus para alinhar o retângulo luminoso com o enquadramento;
-  3. reduzido de escala para a moldura luminosa envolver o carro,
-     deixando as barras de luz mais próximas da carroceria.
-*/
-const STUDIO_CENTER = new THREE.Vector3(4.4699, -1.0423, -0.1495);
-const STUDIO_SCALE = 0.42;
-
-studioGroup.scale.setScalar(STUDIO_SCALE);
-studioGroup.rotation.y = Math.PI * 0.5;
-modelGroup.position.set(0.16, 0, -0.10);
-
-function stripHelpers(root) {
+function removeExternalLights(root) {
+  /*
+    Remove qualquer luz importada que não faça parte do sistema visual de barras.
+    O arquivo enviado não traz KHR_lights_punctual, mas a função protege caso
+    novas exportações tragam luzes escondidas.
+  */
   const toRemove = [];
+
   root.traverse((child) => {
-    if (child.isLight || child.isCamera) {
+    if (child.isLight) {
       toRemove.push(child);
     }
   });
+
   toRemove.forEach((child) => child.parent?.remove(child));
 }
 
-function fitModelToScene(root) {
-  const box = new THREE.Box3().setFromObject(root);
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-  const maxAxis = Math.max(size.x, size.y, size.z);
-  const scale = 5.7 / maxAxis;
-
-  root.position.sub(center);
-  root.scale.setScalar(scale);
-
-  const fittedBox = new THREE.Box3().setFromObject(root);
-  root.position.y -= fittedBox.min.y - (config.model.floorOffset ?? 0);
-}
-
-function selectPrimaryModel(root) {
-  const named = root.getObjectByName('McLaren mp4.5');
-  const model = (named ?? root).clone(true);
-  stripHelpers(model);
-  return model;
-}
-
-function improveCarMaterials(root) {
+function prepareSingleModelMaterials(root) {
   root.traverse((child) => {
     if (!child.isMesh) return;
 
@@ -129,20 +97,35 @@ function improveCarMaterials(root) {
     child.frustumCulled = false;
 
     const materials = Array.isArray(child.material) ? child.material : [child.material];
+
     materials.forEach((material) => {
       if (!material) return;
 
-      // Desliga TODA emissão do carro.
-      if (material.emissive) material.emissive.set(0x000000);
-      if ('emissiveIntensity' in material) material.emissiveIntensity = 0;
-      if ('emissiveMap' in material) material.emissiveMap = null;
+      const name = (material.name ?? '').toLowerCase();
+      const isLed = name.includes('led_bar');
 
-      // Sem iluminação de ambiente falsa no carro.
-      material.envMapIntensity = material.metalness > 0.25 ? 0.035 : 0.018;
+      /*
+        Mantém apenas os materiais emissivos que são realmente luzes do studio.
+        O material glass_details_mat vinha emissivo e atrapalhava a leitura do carro.
+      */
+      if (isLed) {
+        if (material.emissive) material.emissive.setRGB(1.0, 0.9, 0.86);
+        if ('emissiveIntensity' in material) material.emissiveIntensity = 2.4;
+      } else {
+        if (material.emissive) material.emissive.set(0x000000);
+        if ('emissiveIntensity' in material) material.emissiveIntensity = 0;
+        if ('emissiveMap' in material) material.emissiveMap = null;
+      }
 
-      if (material.name && material.name.toLowerCase().includes('glass')) {
+      /*
+        Sem luz de ambiente externa. Mantém só um reflexo mínimo para leitura de
+        materiais metálicos, sem substituir as luzes do modelo.
+      */
+      material.envMapIntensity = material.metalness > 0.25 ? 0.025 : 0.01;
+
+      if (name.includes('glass')) {
         material.transparent = true;
-        material.opacity = Math.min(material.opacity ?? 0.62, 0.54);
+        material.opacity = Math.min(material.opacity ?? 0.58, 0.54);
         material.depthWrite = false;
       }
 
@@ -151,105 +134,72 @@ function improveCarMaterials(root) {
   });
 }
 
-function prepareStudioMaterials(root) {
-  root.traverse((child) => {
-    if (!child.isMesh) return;
-
-    child.castShadow = false;
-    child.receiveShadow = false;
-    child.frustumCulled = false;
-
-    const materials = Array.isArray(child.material) ? child.material : [child.material];
-    materials.forEach((material) => {
-      if (!material) return;
-
-      const name = (material.name ?? '').toLowerCase();
-
-      if (name.includes('led_bar')) {
-        /*
-          Mantém as barras do studio.glb visualmente emissivas.
-          Em Three.js, material emissivo não ilumina de verdade outros objetos;
-          por isso as luzes reais são recriadas a partir da posição dessas barras.
-        */
-        if (material.emissive) material.emissive.setRGB(1.0, 0.92, 0.86);
-        if ('emissiveIntensity' in material) material.emissiveIntensity = 3.0;
-      } else {
-        if (material.emissive) material.emissive.set(0x000000);
-        if ('emissiveIntensity' in material) material.emissiveIntensity = 0;
-        if ('envMapIntensity' in material) material.envMapIntensity = 0;
-      }
-
-      material.needsUpdate = true;
-    });
-  });
-}
-
-function createLightsFromStudio(stageRoot) {
+function createLightsFromModelBars(root) {
   /*
-    As luzes agora ficam presas ao lightRig, que é filho do studioGroup.
-    Assim rotação, escala e reposicionamento do estúdio afetam cenário e luzes juntos.
+    WebGL não calcula iluminação indireta real a partir de materiais emissivos.
+    Então as barras emissivas do próprio GLB são usadas como referência para gerar
+    luzes reais exatamente nas mesmas posições. Não há luzes manuais externas.
   */
-  while (lightRig.children.length) {
-    const child = lightRig.children.pop();
-    if (child.target && child.target.parent) child.target.parent.remove(child.target);
-    lightRig.remove(child);
+  while (modelLightRig.children.length) {
+    modelLightRig.remove(modelLightRig.children[0]);
   }
 
   const worldPosition = new THREE.Vector3();
   const localPosition = new THREE.Vector3();
+  const topBars = [];
+  const floorBars = [];
 
-  stageRoot.updateWorldMatrix(true, true);
-  studioGroup.updateWorldMatrix(true, true);
+  root.updateWorldMatrix(true, true);
+  modelRoot.updateWorldMatrix(true, true);
 
-  stageRoot.traverse((child) => {
-    // Mantém a luz punctual do próprio GLB, mas reancorada no rig.
-    if (child.isLight) {
-      child.getWorldPosition(worldPosition);
-      localPosition.copy(worldPosition);
-      studioGroup.worldToLocal(localPosition);
-
-      const point = new THREE.PointLight(0xfff2e8, 24, 14, 1.7);
-      point.position.copy(localPosition);
-      lightRig.add(point);
-    }
-
+  root.traverse((child) => {
     if (!child.name || !child.name.toLowerCase().includes('led_light_cylinder')) return;
 
     child.getWorldPosition(worldPosition);
     localPosition.copy(worldPosition);
-    studioGroup.worldToLocal(localPosition);
+    modelRoot.worldToLocal(localPosition);
 
-    const isOverhead = worldPosition.y > 2.4;
-    const isFloor = !isOverhead;
-
-    if (isFloor) {
-      // Luz real saindo das barras do chão, agora no mesmo espaço do estúdio.
-      const floorLight = new THREE.PointLight(0xfff0e4, 5.8, 4.6, 1.75);
-      floorLight.position.set(localPosition.x, localPosition.y + 0.18, localPosition.z);
-      lightRig.add(floorLight);
-
-      const glow = new THREE.PointLight(0xffffff, 1.25, 6.2, 2.0);
-      glow.position.set(localPosition.x, localPosition.y + 0.52, localPosition.z);
-      lightRig.add(glow);
+    if (localPosition.y > 2.2) {
+      topBars.push(localPosition.clone());
     } else {
-      // Luz superior apontando para o centro do carro, também dentro do rig.
-      const target = new THREE.Object3D();
-      target.position.set(0.16, 0.55, -0.10);
-      lightRig.add(target);
-
-      const topLight = new THREE.SpotLight(
-        0xfff3e6,
-        18,
-        16,
-        THREE.MathUtils.degToRad(34),
-        0.72,
-        1.55
-      );
-      topLight.position.copy(localPosition);
-      topLight.target = target;
-      lightRig.add(topLight);
+      floorBars.push(localPosition.clone());
     }
   });
+
+  floorBars.forEach((position) => {
+    const light = new THREE.PointLight(0xfff0e3, 1.15, 3.4, 2.15);
+    light.position.set(position.x, position.y + 0.18, position.z);
+    modelLightRig.add(light);
+  });
+
+  topBars.forEach((position, index) => {
+    if (index % 2 !== 0) return;
+
+    const target = new THREE.Object3D();
+    target.position.set(0, 0.68, 0);
+    modelLightRig.add(target);
+
+    const light = new THREE.SpotLight(
+      0xfff2e8,
+      2.6,
+      9.5,
+      THREE.MathUtils.degToRad(36),
+      0.78,
+      2.0
+    );
+
+    light.position.copy(position);
+    light.target = target;
+    modelLightRig.add(light);
+  });
+
+  /*
+    Núcleo muito leve, derivado do rig do modelo, apenas para evitar que o carro
+    desapareça completamente entre as barras de luz. Mantido dentro do modelLightRig.
+  */
+  const softCore = new THREE.PointLight(0xffffff, 0.28, 5.2, 2.25);
+  softCore.position.set(0, 1.1, 0);
+  modelLightRig.add(softCore);
 }
 
 function getScrollProgress() {
@@ -308,7 +258,11 @@ function updateSceneFromScroll(delta) {
   cameraRig.lookTarget.y += handheldY * 0.08;
   camera.lookAt(cameraRig.lookTarget);
 
-  modelGroup.rotation.y = THREE.MathUtils.damp(modelGroup.rotation.y, frame.rotationY, 2.6, delta);
+  /*
+    Mantém a mesma lógica de movimento do cameraPath:
+    os ângulos da câmera continuam iguais em relação ao carro.
+  */
+  modelRoot.rotation.y = THREE.MathUtils.damp(modelRoot.rotation.y, frame.rotationY, 2.6, delta);
 
   camera.fov = THREE.MathUtils.damp(camera.fov, frame.fov ?? config.camera.fov, 3.0, delta);
   camera.updateProjectionMatrix();
@@ -331,16 +285,14 @@ function createComposer() {
 
   const bloom = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.012,
-    0.14,
-    1.0
+    0.008,
+    0.10,
+    1.05
   );
   composer.addPass(bloom);
 
   /*
     Profundidade de campo inspirada em f/1.2.
-    No BokehPass o parâmetro prático é aperture/maxblur, então a abertura é
-    calibrada para parecer rasa sem destruir a leitura do carro.
   */
   bokehPass = new BokehPass(scene, camera, {
     focus: 9,
@@ -353,7 +305,7 @@ function createComposer() {
   return composer;
 }
 
-function loadGltf(path, onProgressLabel) {
+function loadGltf(path, label) {
   const gltfLoader = new GLTFLoader();
   gltfLoader.setMeshoptDecoder(MeshoptDecoder);
 
@@ -363,59 +315,40 @@ function loadGltf(path, onProgressLabel) {
       resolve,
       (event) => {
         if (!event.total) {
-          loaderScreen.querySelector('p').textContent = onProgressLabel;
+          loaderScreen.querySelector('p').textContent = label;
           return;
         }
+
         const percent = Math.round((event.loaded / event.total) * 100);
-        loaderScreen.querySelector('p').textContent = `${onProgressLabel} — ${percent}%`;
+        loaderScreen.querySelector('p').textContent = `${label} — ${percent}%`;
       },
       reject
     );
   });
 }
 
-async function loadStudio() {
-  const gltf = await loadGltf(STUDIO_PATH, 'Carregando cenário do estúdio');
-  const stage = gltf.scene;
-
-  prepareStudioMaterials(stage);
-
-  // Recentrar o estúdio para que o retângulo de luzes envolva o carro.
-  stage.position.set(-STUDIO_CENTER.x, -STUDIO_CENTER.y, -STUDIO_CENTER.z);
-
-  studioGroup.add(stage);
-  studioGroup.updateWorldMatrix(true, true);
-  createLightsFromStudio(stage);
-}
-
-async function loadCar() {
-  const gltf = await loadGltf(MODEL_PATH, 'Carregando modelo 3D');
-  const car = selectPrimaryModel(gltf.scene);
-
-  improveCarMaterials(car);
-  fitModelToScene(car);
-
-  // Pequeno ajuste para o carro “sentar” dentro do retângulo luminoso.
-  car.position.y += 0.03;
-
-  modelGroup.add(car);
-  modelGroup.rotation.y = modelBaseRotationY;
-}
-
-async function bootstrap() {
+async function loadSingleScene() {
   try {
-    await loadStudio();
-    await loadCar();
+    const gltf = await loadGltf(MODEL_PATH, 'Carregando cena 3D');
+    const singleScene = gltf.scene;
+
+    removeExternalLights(singleScene);
+    prepareSingleModelMaterials(singleScene);
+
+    modelRoot.add(singleScene);
+    modelRoot.rotation.y = modelBaseRotationY;
+
+    createLightsFromModelBars(singleScene);
+
     loaderScreen.classList.add('is-hidden');
   } catch (error) {
-    console.error('Erro ao carregar cena:', error);
+    console.error('Erro ao carregar cena única:', error);
     loaderScreen.classList.add('has-error');
     loaderScreen.querySelector('p').innerHTML = `
       Erro ao carregar a cena 3D.<br><br>
-      Caminhos testados:<br>
-      <code>${STUDIO_PATH}</code><br>
+      Caminho testado:<br>
       <code>${MODEL_PATH}</code><br><br>
-      Confira se os arquivos estão em <code>assets/</code> e se o GitHub Pages já terminou o deploy.
+      Confira se o arquivo está em <code>assets/mclaren.glb</code> e se o GitHub Pages já terminou o deploy.
     `;
   }
 }
@@ -427,7 +360,7 @@ cameraRig.currentTarget.copy(firstFrame.target);
 camera.position.copy(firstFrame.position);
 camera.lookAt(firstFrame.target);
 
-bootstrap();
+loadSingleScene();
 
 window.addEventListener('pointermove', (event) => {
   pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
