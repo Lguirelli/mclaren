@@ -110,7 +110,7 @@ function prepareSingleModelMaterials(root) {
       */
       if (isLed) {
         if (material.emissive) material.emissive.setRGB(1.0, 0.9, 0.86);
-        if ('emissiveIntensity' in material) material.emissiveIntensity = 2.4;
+        if ('emissiveIntensity' in material) material.emissiveIntensity = 3.6;
       } else {
         if (material.emissive) material.emissive.set(0x000000);
         if ('emissiveIntensity' in material) material.emissiveIntensity = 0;
@@ -138,7 +138,7 @@ function createLightsFromModelBars(root) {
   /*
     WebGL não calcula iluminação indireta real a partir de materiais emissivos.
     Então as barras emissivas do próprio GLB são usadas como referência para gerar
-    luzes reais exatamente nas mesmas posições. Não há luzes manuais externas.
+    luzes reais exatamente nas mesmas posições. As intensidades estão 1,5x mais fortes que na v20.
   */
   while (modelLightRig.children.length) {
     modelLightRig.remove(modelLightRig.children[0]);
@@ -167,7 +167,7 @@ function createLightsFromModelBars(root) {
   });
 
   floorBars.forEach((position) => {
-    const light = new THREE.PointLight(0xfff0e3, 1.15, 3.4, 2.15);
+    const light = new THREE.PointLight(0xfff0e3, 1.725, 3.4, 2.15);
     light.position.set(position.x, position.y + 0.18, position.z);
     modelLightRig.add(light);
   });
@@ -181,7 +181,7 @@ function createLightsFromModelBars(root) {
 
     const light = new THREE.SpotLight(
       0xfff2e8,
-      2.6,
+      3.9,
       9.5,
       THREE.MathUtils.degToRad(36),
       0.78,
@@ -197,7 +197,7 @@ function createLightsFromModelBars(root) {
     Núcleo muito leve, derivado do rig do modelo, apenas para evitar que o carro
     desapareça completamente entre as barras de luz. Mantido dentro do modelLightRig.
   */
-  const softCore = new THREE.PointLight(0xffffff, 0.28, 5.2, 2.25);
+  const softCore = new THREE.PointLight(0xffffff, 0.42, 5.2, 2.25);
   softCore.position.set(0, 1.1, 0);
   modelLightRig.add(softCore);
 }
