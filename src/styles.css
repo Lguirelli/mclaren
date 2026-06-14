@@ -1674,3 +1674,352 @@ p,
     min-height: 100svh;
   }
 }
+
+
+/* =========================================================
+   V24 — restaurar posições originais dos textos
+   ========================================================= */
+
+/*
+  O problema do print acontece porque o breakpoint mobile estava centralizando
+  todos os painéis. A partir daqui, mesmo em telas estreitas, a página volta
+  para a lógica original:
+  - hero e seções padrão à esquerda;
+  - seções com .panel-right à direita;
+  - seção .panel-end centralizada.
+*/
+
+/* Desktop/tablet: reforça a lógica original */
+.panel-hero,
+.panel-side {
+  margin-left: clamp(1rem, 4vw, 5rem) !important;
+  margin-right: auto !important;
+  text-align: left !important;
+  align-items: flex-start !important;
+}
+
+.panel-right {
+  margin-left: auto !important;
+  margin-right: clamp(1rem, 5vw, 6rem) !important;
+  text-align: right !important;
+  align-items: flex-end !important;
+}
+
+.panel-end {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+  align-items: center !important;
+}
+
+.panel-hero .panel-copy,
+.panel-side .panel-copy {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  text-align: left !important;
+}
+
+.panel-right .panel-copy,
+.panel-copy-right {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  text-align: right !important;
+}
+
+.panel-end .panel-copy,
+.panel-copy-center {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}
+
+/* Títulos respeitam o alinhamento da seção */
+.panel-hero h1,
+.panel-side h2,
+.panel-hero h2,
+.panel-side h1 {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  text-align: left !important;
+}
+
+.panel-right h1,
+.panel-right h2,
+.panel-copy-right h1,
+.panel-copy-right h2 {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  text-align: right !important;
+}
+
+.panel-end h1,
+.panel-end h2,
+.panel-copy-center h1,
+.panel-copy-center h2 {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}
+
+/* Parágrafos e listas voltam a acompanhar a direção do bloco */
+.panel-hero p,
+.panel-side p,
+.panel-hero .lead,
+.panel-side .lead {
+  text-align: justify !important;
+  text-align-last: left !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+.panel-right p,
+.panel-right .lead,
+.panel-copy-right p,
+.panel-copy-right .lead {
+  text-align: justify !important;
+  text-align-last: right !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+.panel-end p,
+.panel-end .lead,
+.panel-end .lead-small,
+.panel-copy-center p,
+.panel-copy-center .lead {
+  text-align: center !important;
+  text-align-last: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Kicker e linhas decorativas seguem o lado da seção */
+.panel-hero .kicker,
+.panel-side .kicker {
+  text-align: left !important;
+}
+
+.panel-hero .kicker::after,
+.panel-side .kicker::after {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+.panel-right .kicker,
+.panel-copy-right .kicker {
+  text-align: right !important;
+}
+
+.panel-right .kicker::after,
+.panel-copy-right .kicker::after {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+.panel-end .kicker,
+.panel-copy-center .kicker {
+  text-align: center !important;
+}
+
+.panel-end .kicker::after,
+.panel-copy-center .kicker::after {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Mobile: não centraliza tudo, só reduz e mantém a composição original */
+@media (max-width: 900px) {
+  .page-content {
+    padding-inline: 0 !important;
+  }
+
+  .panel,
+  .panel-hero,
+  .panel-side,
+  .panel-right,
+  .panel-end {
+    width: min(36rem, calc(100vw - 1.25rem)) !important;
+    min-height: 100svh !important;
+    padding: clamp(4.25rem, 10svh, 6rem) 0.6rem clamp(3.5rem, 8svh, 5rem) !important;
+  }
+
+  .panel-hero,
+  .panel-side {
+    margin-left: clamp(0.7rem, 4vw, 1.5rem) !important;
+    margin-right: auto !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+
+  .panel-right {
+    margin-left: auto !important;
+    margin-right: clamp(0.7rem, 4vw, 1.5rem) !important;
+    align-items: flex-end !important;
+    text-align: right !important;
+  }
+
+  .panel-end {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .panel-copy,
+  .panel-copy-hero,
+  .panel-copy-right,
+  .panel-copy-center,
+  .panel-copy-wide {
+    width: min(100%, 32rem) !important;
+    padding: 0.6rem 0 !important;
+  }
+
+  .panel-hero .panel-copy,
+  .panel-side .panel-copy,
+  .panel-copy-hero {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    text-align: left !important;
+  }
+
+  .panel-right .panel-copy,
+  .panel-copy-right {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    text-align: right !important;
+  }
+
+  .panel-end .panel-copy,
+  .panel-copy-center,
+  .panel-copy-wide {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
+  }
+
+  h1 {
+    font-size: clamp(2.45rem, 11.4vw, 4.25rem) !important;
+    max-width: 10.5ch !important;
+  }
+
+  h2 {
+    font-size: clamp(2rem, 9.4vw, 3.45rem) !important;
+    max-width: 12ch !important;
+  }
+
+  .panel-hero h1,
+  .panel-side h1,
+  .panel-side h2 {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    text-align: left !important;
+  }
+
+  .panel-right h1,
+  .panel-right h2,
+  .panel-copy-right h1,
+  .panel-copy-right h2 {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    text-align: right !important;
+  }
+
+  .panel-end h1,
+  .panel-end h2,
+  .panel-copy-center h1,
+  .panel-copy-center h2 {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
+  }
+
+  p,
+  .lead,
+  .lead-small {
+    font-size: clamp(0.92rem, 3.7vw, 1.02rem) !important;
+    line-height: 1.68 !important;
+  }
+
+  .panel-hero p,
+  .panel-side p,
+  .panel-hero .lead,
+  .panel-side .lead {
+    text-align: justify !important;
+    text-align-last: left !important;
+  }
+
+  .panel-right p,
+  .panel-right .lead,
+  .panel-copy-right p,
+  .panel-copy-right .lead {
+    text-align: justify !important;
+    text-align-last: right !important;
+  }
+
+  .panel-end p,
+  .panel-end .lead,
+  .panel-end .lead-small,
+  .panel-copy-center p,
+  .panel-copy-center .lead {
+    text-align: center !important;
+    text-align-last: center !important;
+  }
+
+  .stat-grid,
+  .spec-grid {
+    width: 100% !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .panel-hero .stat-grid,
+  .panel-side .stat-grid {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    text-align: left !important;
+  }
+
+  .panel-right .stat-grid,
+  .panel-right .spec-grid,
+  .panel-copy-right .stat-grid,
+  .panel-copy-right .spec-grid {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    text-align: right !important;
+  }
+
+  .panel-end .spec-grid,
+  .panel-end .stat-grid {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
+  }
+
+  .bullet-list {
+    width: 100% !important;
+    max-width: 30rem !important;
+  }
+}
+
+/* Celulares menores: mantém posição original, só evita excesso de largura */
+@media (max-width: 520px) {
+  .panel,
+  .panel-hero,
+  .panel-side,
+  .panel-right,
+  .panel-end {
+    width: calc(100vw - 1rem) !important;
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 12.2vw, 3.55rem) !important;
+  }
+
+  h2 {
+    font-size: clamp(1.85rem, 10.6vw, 3rem) !important;
+  }
+
+  .stat-grid,
+  .spec-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
