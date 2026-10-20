@@ -1,13 +1,10 @@
-import * as THREE from 'three';
+import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RectAreaLightTexturesLib } from 'three/addons/lights/RectAreaLightTexturesLib.js';
 import { advanceCameraProgress } from './cameraMotion.js';
+import { prepareMaterial } from './materials.js';
+import { createPostProcessing } from './postprocessing.js';
 
 const $ = (selector) => document.querySelector(selector);
 const chapters = [...document.querySelectorAll('.chapter')];
@@ -15,7 +12,7 @@ const links = [...document.querySelectorAll('.chapter-nav a')];
 const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
 let reduced = motionQuery.matches;
 let ready = false;
-let scene, camera, renderer, composer, bokeh, bloom, keyLight, rimLight, sweepLight;
+let scene, camera, renderer, post, keyLight, rimLight, sweepLight;
 let positions, targets, config, intro = 0, scrollValue = 0, activeChapter = -1;
 let frameId = 0, lastTime = 0, slowTime = 0, qualityDropped = false;
 let anchors = [], ledMaterials = [];
@@ -31,7 +28,7 @@ function applyMotion() {
   document.documentElement.style.scrollBehavior = reduced ? 'auto' : 'smooth';
   $('#motion-toggle').setAttribute('aria-pressed', String(reduced));
   $('#motion-toggle').textContent = reduced ? 'Ativar movimento' : 'Reduzir movimento';
-  if (bokeh) bokeh.enabled = !mobile && !reduced && !qualityDropped;
+  if (post) post.setQuality({mobile,reduced,low:qualityDropped});
   if (reduced) intro = 4;
   requestFrame();
 }
@@ -73,7 +70,7 @@ function updateEditorial() {
 measure(); updateEditorial();
 document.fonts.ready.then(() => { measure(); requestFrame(); });
 
-function createEnvironment() {
+async function createEnvironment() {
   // Static softboxes generate reflections without adding visible geometry to the set.
   const studio = new THREE.Scene();
   studio.background = new THREE.Color(0x090b10);
@@ -82,28 +79,31 @@ function createEnvironment() {
     mesh.material.color.multiplyScalar(intensity);
     mesh.position.set(...position); mesh.lookAt(0,0,0); studio.add(mesh);
   };
-  card([-4,6,2],[3,8],0xfff5ec,2);
-  card([5,3,-3],[2,7],0xe5ebf2,.65);
-  card([0,7,0],[5,2],0xffffff,.6);
+  card([-2.2,4.2,1.5],[3,5],0xfff5ec,1.7);
+  card([2.2,4.2,-1.8],[2,5],0xe5ebf2,.55);
+  card([0,4.2,-3.6],[3,1],0xffffff,.35);
   const pmrem = new THREE.PMREMGenerator(renderer);
-  const map = pmrem.fromScene(studio,.06,.1,50);
+  const map = await pmrem.fromSceneAsync(studio,.08,.1,50,{size:256});
   scene.environment = map.texture;
   studio.traverse(o => { o.geometry?.dispose(); o.material?.dispose(); });
   pmrem.dispose();
 }
 function createLighting() {
-  RectAreaLightUniformsLib.init();
+  THREE.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
   scene.add(new THREE.HemisphereLight(0xe3e7ed,0x111016,.08));
   keyLight = new THREE.RectAreaLight(0xfff5ec,2,4,7);
-  keyLight.position.set(-3.5,5,2); keyLight.lookAt(lightTarget); scene.add(keyLight);
+  keyLight.position.set(-2.2,4.2,1.5); keyLight.lookAt(lightTarget); scene.add(keyLight);
   rimLight = new THREE.RectAreaLight(0xe5ebf2,.65,2,6);
-  rimLight.position.set(3.5,3,-3); rimLight.lookAt(lightTarget); scene.add(rimLight);
+  rimLight.position.set(2.2,4.2,-1.8); rimLight.lookAt(lightTarget); scene.add(rimLight);
   sweepLight = new THREE.RectAreaLight(0xfff8ef,.25,1.1,5);
-  sweepLight.position.set(1,4,2); sweepLight.lookAt(lightTarget); scene.add(sweepLight);
+  sweepLight.position.set(0,4.2,-3.6); sweepLight.lookAt(lightTarget); scene.add(sweepLight);
   const shadowLight = new THREE.SpotLight(0xfff5ec,22,24,Math.PI/4,.8,2);
   shadowLight.position.set(-3,7,4); shadowLight.target.position.set(0,0,0);
   shadowLight.castShadow = true;
-  shadowLight.shadow.mapSize.set(1024,1024);
+  shadowLight.shadow.mapSize.set(mobile ? 1024 : 2048,mobile ? 1024 : 2048);
+  shadowLight.shadow.radius = 2;
+  shadowLight.shadow.autoUpdate = false;
+  shadowLight.shadow.needsUpdate = true;
   shadowLight.shadow.bias = -.00015; shadowLight.shadow.normalBias = .025;
   shadowLight.shadow.camera.near = .5; shadowLight.shadow.camera.far = 22;
   scene.add(shadowLight, shadowLight.target);
@@ -125,27 +125,11 @@ async function loadModel() {
     const wasArray = Array.isArray(object.material);
     const materials = wasArray ? object.material : [object.material];
     object.material = materials.map(original => {
-      const material = original.clone();
+      const { material, isCar } = prepareMaterial(original, renderer);
       const name = material.name.toLowerCase();
-      const isCar = /body_mat|wheels_mat|bottom_details_mat|glass_details_mat|interior_mat/.test(name);
       object.castShadow = isCar && !name.includes('glass');
       object.receiveShadow = isCar || name === 'material.004';
-      material.envMapIntensity = isCar ? .3 : .12;
-      if (name === 'led_bar') {
-        material.emissive.set(0xffe8d4); material.emissiveIntensity = 0;
-        ledMaterials.push(material);
-      } else {
-        material.emissive?.set(0x000000);
-        material.emissiveIntensity = 0;
-      }
-      if (name === 'material.004') { material.roughness = .6; material.metalness = .06; }
-      if (name === 'wheels_mat') {
-        // Keep the original wheel maps and their rim detail, but damp the glossy response.
-        material.envMapIntensity = .1;
-        material.roughness = 1;
-        material.metalness = .25;
-      }
-      if (name.includes('glass')) { material.transparent = true; material.opacity = .5; material.depthWrite = false; }
+      if (name === 'led_bar') ledMaterials.push(material);
       return material;
     });
     if (!wasArray) object.material = object.material[0];
@@ -161,25 +145,16 @@ async function loadModel() {
   const patch = new THREE.Mesh(new THREE.PlaneGeometry(4.4,8.2),new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(textureCanvas),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1 }));
   patch.rotation.x = -Math.PI/2; patch.rotation.z = -config.model.rotationY; patch.position.y = -.020;
   scene.add(patch);
-  renderer.shadowMap.needsUpdate = true;
-}
-function setupComposer() {
-  composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene,camera));
-  bokeh = new BokehPass(scene,camera,{focus:10,aperture:.000035,maxblur:.003});
-  bokeh.enabled = !mobile && !reduced;
-  composer.addPass(bokeh);
-  bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.035,.2,1.2);
-  composer.addPass(bloom); composer.addPass(new OutputPass());
+
 }
 function resize() {
   measure();
   if (!renderer) return;
   const ratio = Math.min(devicePixelRatio,mobile || qualityDropped ? 1 : 1.5);
   renderer.setPixelRatio(ratio); renderer.setSize(innerWidth,innerHeight);
-  composer.setPixelRatio(ratio); composer.setSize(innerWidth,innerHeight);
+  
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  bokeh.enabled = !mobile && !reduced && !qualityDropped;
+  post?.setQuality({mobile,reduced,low:qualityDropped});
   updateEditorial(); requestFrame();
 }
 function requestFrame() { if (ready && !document.hidden && !frameId) frameId = requestAnimationFrame(render); }
@@ -215,17 +190,14 @@ function render(now) {
   camera.updateProjectionMatrix();
   camera.updateMatrixWorld(true);
   direction.copy(target).applyMatrix4(camera.matrixWorldInverse);
-  bokeh.uniforms.focus.value = Math.max(.1,-direction.z);
-  bokeh.uniforms.aperture.value = .000025 + .00002*Math.pow(Math.sin(u*Math.PI),2);
+  post.focus.value = Math.max(.1,-direction.z);
   keyLight.intensity = .8 + reveal*1.2;
   rimLight.intensity = .25 + reveal*.4;
-  sweepLight.position.x = -3 + u*6;
-  sweepLight.position.z = 2*Math.cos(u*Math.PI);
   sweepLight.lookAt(lightTarget);
-  sweepLight.intensity = .2 + .12*Math.sin(u*Math.PI);
+  sweepLight.intensity = .15;
   ledMaterials.forEach((material,i) => { material.emissiveIntensity = reduced ? 1.1 : 1.1*THREE.MathUtils.smoothstep(intro,i*.075,.65+i*.075); });
-  renderer.toneMappingExposure = .62;
-  composer.render();
+  renderer.toneMappingExposure = .85;
+  post.render();
   if (!qualityDropped && intro > 4 && rawDt > .038 && rawDt < .3) slowTime += rawDt;
   else slowTime = Math.max(0,slowTime-dt*.5);
   if (slowTime > 3) { qualityDropped = true; resize(); }
@@ -245,17 +217,35 @@ async function init() {
     config = await response.json();
     scene = new THREE.Scene(); scene.background = new THREE.Color(0x08090b);
     scene.fog = new THREE.FogExp2(0x08090b,.018);
-    renderer = new THREE.WebGLRenderer({canvas:$('#webgl'),antialias:true,powerPreference:'high-performance'});
+    renderer = new THREE.WebGPURenderer({canvas:$('#webgl'),antialias:true,alpha:false,
+      forceWebGL:new URLSearchParams(location.search).get('renderer') === 'webgl'});
+    await renderer.init();
+    document.documentElement.dataset.renderer = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl2';
+    renderer.onDeviceLost = () => {
+      ready = false; cancelAnimationFrame(frameId); frameId = 0;
+      document.body.classList.remove('motion-enabled');
+      revealStory();
+      console.warn('A cena foi pausada porque o dispositivo gráfico ficou indisponível. Recarregue a página para retomar.');
+    };
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.shadowMap.autoUpdate = false;
+    renderer.toneMapping = THREE.AgXToneMapping;
+    renderer.toneMappingExposure = .85;
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+
     camera = new THREE.PerspectiveCamera(30,innerWidth/innerHeight,.1,150);
     positions = new THREE.CatmullRomCurve3(config.keyframes.map(f=>new THREE.Vector3(...f.position)),false,'centripetal');
     targets = new THREE.CatmullRomCurve3(config.keyframes.map(f=>new THREE.Vector3(...f.target)),false,'centripetal');
-    createEnvironment(); createLighting(); setupComposer(); resize();
+    createLighting();
+    post = createPostProcessing(renderer,scene,camera);
+    resize();
+    await createEnvironment();
     await loadModel();
+    $('#loader p').textContent = 'Preparando materiais e iluminação';
     scrollValue = storyProgress();
+    positions.getPoint(scrollValue / (chapters.length - 1),camera.position);
+    targets.getPoint(scrollValue / (chapters.length - 1),target);
+    camera.lookAt(target);
+    await renderer.compileAsync(scene,camera);
     ready = true; intro = reduced ? 4 : 0;
     render(performance.now());
     $('#loader').classList.add('is-hidden'); revealStory();
