@@ -8,10 +8,10 @@ O carro, as luminárias, suas texturas e o Three.js 0.180.0 estão incluídos. A
 
 ## Direção de iluminação
 
-O cenário contém o carro, um único plano transparente que recebe sombras e os dois assets fornecidos. O piso texturizado, a estrutura e as barras luminosas do cenário original continuam excluídos.
+O cenário contém o carro, um único plano transparente que recebe sombras e cinco luminárias montadas com os dois assets fornecidos. O piso texturizado, a estrutura e as barras luminosas do cenário original continuam excluídos.
 
-- A luminária suspensa fornece luz superior neutra, com aproximadamente três metros de comprimento e base a 3,5 metros. Seus cabos originais continuam visíveis e terminam acima da peça, sem teto modelado.
-- O tripé industrial fica na lateral traseira, com altura aproximada de 1,66 metro. Dois focos levemente quentes acompanham os centros e as direções reais das lentes.
+- Duas luminárias suspensas fornecem luz superior neutra, com três metros de comprimento e bases a 3,5 e 3,8 metros. Seus cabos originais continuam visíveis e terminam acima das peças, sem teto modelado.
+- Três tripés industriais ficam nas laterais, fora da área ocupada pelo carro, com altura aproximada de 1,66 metro. Os seis focos levemente quentes acompanham os centros e as direções das lentes e apontam para o carro.
 - A luz ampla superior e a fonte que projeta sua sombra compartilham a mesma origem. É uma aproximação de área com sombra em tempo real, não uma simulação fotométrica da luminária.
 - O ambiente de reflexos usa cartões nas posições e orientações dessas luminárias, com preenchimento ambiente discreto. Foram retiradas as luzes anteriores sem uma luminária correspondente.
 - A emissão das lâmpadas é contida e estável, sem pulsação ou aumento de intensidade durante a entrada. O brilho superficial da lâmpada e a luz que ilumina a carroceria são calculados separadamente pelo renderizador.
@@ -49,3 +49,9 @@ A geometria dos três GLBs foi decodificada em testes. Foram verificados os mate
 As duas luminárias foram inspecionadas em imagens renderizadas no Blender. Essas imagens serviram para conferir geometria e materiais; não representam uma validação visual da cena no WebGPU. A conferência HTTP local foi bloqueada pelo ambiente na revisão anterior. A aparência final, a compilação dos shaders e o fallback automático precisam de conferência no navegador.
 
 Os modelos e marcas foram fornecidos pelo usuário. Não foi incluída uma licença adicional dos assets nos arquivos enviados. Mantenha os créditos e condições de uso dos respectivos autores ao publicar.
+
+## Revisão 6
+
+Adicionada uma luminária suspensa e dois tripés. As cinco peças compartilham geometrias e texturas dos dois GLBs, carregados apenas uma vez cada. A intensidade total das fontes existentes foi redistribuída entre as novas peças; isso não garante exposição idêntica em cada ponto do carro.
+
+Os mapas de sombra são estáticos e usam resoluções menores por fonte para limitar a memória, com possível redução de definição nas sombras em close. Testes de montagem desktop e celular confirmaram cinco luminárias, oito posições emissoras, compartilhamento de geometria, folga em relação ao carro e orientação dos refletores. A aparência final no navegador permanece sem validação visual.
