@@ -7,6 +7,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { advanceCameraProgress } from './cameraMotion.js';
 
 const $ = (selector) => document.querySelector(selector);
 const chapters = [...document.querySelectorAll('.chapter')];
@@ -23,7 +24,6 @@ const target = new THREE.Vector3(), desired = new THREE.Vector3(), direction = n
 const lightTarget = new THREE.Vector3(0,.65,0);
 let mobile = innerWidth <= 700;
 const clamp = THREE.MathUtils.clamp;
-const damp = THREE.MathUtils.damp;
 
 function applyMotion() {
   document.body.classList.toggle('motion-enabled', !reduced);
@@ -66,7 +66,6 @@ function updateEditorial() {
     activeChapter = index;
     links.forEach((link,i) => i === index ? link.setAttribute('aria-current','step') : link.removeAttribute('aria-current'));
     $('#chapter-label').textContent = `${String(index + 1).padStart(2,'0')} — ${chapters[index].dataset.chapter}`;
-    document.body.classList.toggle('right-shot', chapters[index].classList.contains('align-right'));
   }
   const p = clamp(scrollY / Math.max(1,document.documentElement.scrollHeight - innerHeight),0,1);
   $('.scroll-progress span').style.transform = `scaleX(${p})`;
@@ -83,9 +82,9 @@ function createEnvironment() {
     mesh.material.color.multiplyScalar(intensity);
     mesh.position.set(...position); mesh.lookAt(0,0,0); studio.add(mesh);
   };
-  card([-4,6,2],[3,8],0xffeee0,5);
-  card([5,3,-3],[2,7],0xc3d9ff,3);
-  card([0,7,0],[5,2],0xffffff,2);
+  card([-4,6,2],[3,8],0xfff5ec,2);
+  card([5,3,-3],[2,7],0xe5ebf2,.65);
+  card([0,7,0],[5,2],0xffffff,.6);
   const pmrem = new THREE.PMREMGenerator(renderer);
   const map = pmrem.fromScene(studio,.06,.1,50);
   scene.environment = map.texture;
@@ -94,14 +93,14 @@ function createEnvironment() {
 }
 function createLighting() {
   RectAreaLightUniformsLib.init();
-  scene.add(new THREE.HemisphereLight(0xb9c9e2,0x111016,.22));
-  keyLight = new THREE.RectAreaLight(0xffeee0,5,4,7);
+  scene.add(new THREE.HemisphereLight(0xe3e7ed,0x111016,.08));
+  keyLight = new THREE.RectAreaLight(0xfff5ec,2,4,7);
   keyLight.position.set(-3.5,5,2); keyLight.lookAt(lightTarget); scene.add(keyLight);
-  rimLight = new THREE.RectAreaLight(0xc9dcff,3.5,2,6);
+  rimLight = new THREE.RectAreaLight(0xe5ebf2,.65,2,6);
   rimLight.position.set(3.5,3,-3); rimLight.lookAt(lightTarget); scene.add(rimLight);
-  sweepLight = new THREE.RectAreaLight(0xffffff,2,1.1,5);
+  sweepLight = new THREE.RectAreaLight(0xfff8ef,.25,1.1,5);
   sweepLight.position.set(1,4,2); sweepLight.lookAt(lightTarget); scene.add(sweepLight);
-  const shadowLight = new THREE.SpotLight(0xffeee2,55,24,Math.PI/4,.8,2);
+  const shadowLight = new THREE.SpotLight(0xfff5ec,22,24,Math.PI/4,.8,2);
   shadowLight.position.set(-3,7,4); shadowLight.target.position.set(0,0,0);
   shadowLight.castShadow = true;
   shadowLight.shadow.mapSize.set(1024,1024);
@@ -131,7 +130,7 @@ async function loadModel() {
       const isCar = /body_mat|wheels_mat|bottom_details_mat|glass_details_mat|interior_mat/.test(name);
       object.castShadow = isCar && !name.includes('glass');
       object.receiveShadow = isCar || name === 'material.004';
-      material.envMapIntensity = isCar ? .65 : .25;
+      material.envMapIntensity = isCar ? .3 : .12;
       if (name === 'led_bar') {
         material.emissive.set(0xffe8d4); material.emissiveIntensity = 0;
         ledMaterials.push(material);
@@ -139,7 +138,13 @@ async function loadModel() {
         material.emissive?.set(0x000000);
         material.emissiveIntensity = 0;
       }
-      if (name === 'material.004') { material.roughness = .34; material.metalness = .22; }
+      if (name === 'material.004') { material.roughness = .6; material.metalness = .06; }
+      if (name === 'wheels_mat') {
+        // Keep the original wheel maps and their rim detail, but damp the glossy response.
+        material.envMapIntensity = .1;
+        material.roughness = 1;
+        material.metalness = .25;
+      }
       if (name.includes('glass')) { material.transparent = true; material.opacity = .5; material.depthWrite = false; }
       return material;
     });
@@ -164,7 +169,7 @@ function setupComposer() {
   bokeh = new BokehPass(scene,camera,{focus:10,aperture:.000035,maxblur:.003});
   bokeh.enabled = !mobile && !reduced;
   composer.addPass(bokeh);
-  bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.14,.35,1.1);
+  bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.035,.2,1.2);
   composer.addPass(bloom); composer.addPass(new OutputPass());
 }
 function resize() {
@@ -183,7 +188,7 @@ function render(now) {
   const rawDt = lastTime ? (now - lastTime) / 1000 : 1/60;
   const dt = Math.min(rawDt,.05); lastTime = now;
   const wanted = storyProgress();
-  scrollValue = reduced ? Math.round(wanted) : damp(scrollValue,wanted,4.5,dt);
+  scrollValue = advanceCameraProgress(scrollValue, wanted, dt);
   const u = clamp(scrollValue / (chapters.length - 1),0,1);
   positions.getPoint(u,desired); targets.getPoint(u,target);
   const a = Math.floor(scrollValue), b = Math.min(a+1,config.keyframes.length-1), t = scrollValue-a;
@@ -205,25 +210,28 @@ function render(now) {
   camera.lookAt(target);
   // Shift subject away from copy; portrait leaves the lower screen for the story.
   const side = Math.cos(scrollValue*Math.PI);
+  document.body.style.setProperty('--copy-side', String((1-side)/2));
   camera.setViewOffset(innerWidth,innerHeight,mobile ? 0 : -innerWidth*.15*side,mobile ? innerHeight*.19 : 0,innerWidth,innerHeight);
   camera.updateProjectionMatrix();
   camera.updateMatrixWorld(true);
   direction.copy(target).applyMatrix4(camera.matrixWorldInverse);
   bokeh.uniforms.focus.value = Math.max(.1,-direction.z);
   bokeh.uniforms.aperture.value = .000025 + .00002*Math.pow(Math.sin(u*Math.PI),2);
-  keyLight.intensity = 2.4 + reveal*3;
-  rimLight.intensity = 1.4 + reveal*2.5 + u;
+  keyLight.intensity = .8 + reveal*1.2;
+  rimLight.intensity = .25 + reveal*.4;
   sweepLight.position.x = -3 + u*6;
   sweepLight.position.z = 2*Math.cos(u*Math.PI);
   sweepLight.lookAt(lightTarget);
-  sweepLight.intensity = 1.2 + 1.4*Math.sin(u*Math.PI);
-  ledMaterials.forEach((material,i) => { material.emissiveIntensity = reduced ? 3.5 : 3.5*THREE.MathUtils.smoothstep(intro,i*.075,.65+i*.075); });
-  renderer.toneMappingExposure = .72 + reveal*.14;
+  sweepLight.intensity = .2 + .12*Math.sin(u*Math.PI);
+  ledMaterials.forEach((material,i) => { material.emissiveIntensity = reduced ? 1.1 : 1.1*THREE.MathUtils.smoothstep(intro,i*.075,.65+i*.075); });
+  renderer.toneMappingExposure = .62;
   composer.render();
   if (!qualityDropped && intro > 4 && rawDt > .038 && rawDt < .3) slowTime += rawDt;
   else slowTime = Math.max(0,slowTime-dt*.5);
   if (slowTime > 3) { qualityDropped = true; resize(); }
-  if (!reduced && (intro < 4 || Math.abs(scrollValue-wanted)>.0001 || smoothPointer.distanceTo(pointer)>.001)) requestFrame();
+  const cameraMoving = Math.abs(scrollValue-wanted) > .0001;
+  const effectsMoving = !reduced && (intro < 4 || smoothPointer.distanceTo(pointer) > .001);
+  if (cameraMoving || effectsMoving) requestFrame();
 }
 window.addEventListener('scroll',()=>{updateEditorial(); requestFrame();},{passive:true});
 window.addEventListener('pointermove',event=>{if(mobile || reduced)return;pointer.set((event.clientX/innerWidth-.5)*2,-(event.clientY/innerHeight-.5)*2);requestFrame();},{passive:true});

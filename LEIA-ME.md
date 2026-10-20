@@ -61,3 +61,15 @@ não conseguiu alcançar o servidor local deste ambiente.
 
 Os modelos 3D foram fornecidos no projeto original. A identidade e as marcas
 foram preservadas para este estudo visual independente.
+
+## Revisão 2
+
+- Removido o arredondamento da câmera para capítulos inteiros no modo reduzido.
+- Progresso fracionário com velocidade limitada e continuação dos quadros até a câmera chegar ao destino.
+- Modo reduzido desativa entradas, paralaxe e desfoque; a navegação da câmera continua suave.
+- Sombreado atrás do texto muda gradualmente ao longo do percurso.
+- Títulos sem pontos finais ou frases separadas e parágrafos com narrativa mais contínua.
+- Iluminação principal e de recorte mais baixas, reflexos menos intensos, barras com emissão reduzida e exposição estável.
+- Brilho ambiental das rodas e metalização do piso reduzidos.
+- Regressão de movimento verificada a 30, 60 e 120 quadros por segundo, incluindo reversão e retomada da aba.
+- Ajustes visuais orientados pelas capturas enviadas; a nova renderização ainda precisa de conferência visual no navegador.
