@@ -1,9 +1,10 @@
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { RectAreaLightTexturesLib } from 'three/addons/lights/RectAreaLightTexturesLib.js';
+import { createPracticalLighting } from './practicalLighting.js';
 import { advanceCameraProgress } from './cameraMotion.js';
 import { prepareMaterial } from './materials.js';
+import { isolateCar, createShadowCatcher } from './scenery.js';
 import { createPostProcessing } from './postprocessing.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -12,13 +13,12 @@ const links = [...document.querySelectorAll('.chapter-nav a')];
 const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
 let reduced = motionQuery.matches;
 let ready = false;
-let scene, camera, renderer, post, keyLight, rimLight, sweepLight;
+let scene, camera, renderer, post;
 let positions, targets, config, intro = 0, scrollValue = 0, activeChapter = -1;
 let frameId = 0, lastTime = 0, slowTime = 0, qualityDropped = false;
-let anchors = [], ledMaterials = [];
+let anchors = [];
 const pointer = new THREE.Vector2(), smoothPointer = new THREE.Vector2();
 const target = new THREE.Vector3(), desired = new THREE.Vector3(), direction = new THREE.Vector3();
-const lightTarget = new THREE.Vector3(0,.65,0);
 let mobile = innerWidth <= 700;
 const clamp = THREE.MathUtils.clamp;
 
@@ -70,44 +70,6 @@ function updateEditorial() {
 measure(); updateEditorial();
 document.fonts.ready.then(() => { measure(); requestFrame(); });
 
-async function createEnvironment() {
-  // Static softboxes generate reflections without adding visible geometry to the set.
-  const studio = new THREE.Scene();
-  studio.background = new THREE.Color(0x090b10);
-  const card = (position, size, color, intensity) => {
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(...size), new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }));
-    mesh.material.color.multiplyScalar(intensity);
-    mesh.position.set(...position); mesh.lookAt(0,0,0); studio.add(mesh);
-  };
-  card([-2.2,4.2,1.5],[3,5],0xfff5ec,1.7);
-  card([2.2,4.2,-1.8],[2,5],0xe5ebf2,.55);
-  card([0,4.2,-3.6],[3,1],0xffffff,.35);
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const map = await pmrem.fromSceneAsync(studio,.08,.1,50,{size:256});
-  scene.environment = map.texture;
-  studio.traverse(o => { o.geometry?.dispose(); o.material?.dispose(); });
-  pmrem.dispose();
-}
-function createLighting() {
-  THREE.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
-  scene.add(new THREE.HemisphereLight(0xe3e7ed,0x111016,.08));
-  keyLight = new THREE.RectAreaLight(0xfff5ec,2,4,7);
-  keyLight.position.set(-2.2,4.2,1.5); keyLight.lookAt(lightTarget); scene.add(keyLight);
-  rimLight = new THREE.RectAreaLight(0xe5ebf2,.65,2,6);
-  rimLight.position.set(2.2,4.2,-1.8); rimLight.lookAt(lightTarget); scene.add(rimLight);
-  sweepLight = new THREE.RectAreaLight(0xfff8ef,.25,1.1,5);
-  sweepLight.position.set(0,4.2,-3.6); sweepLight.lookAt(lightTarget); scene.add(sweepLight);
-  const shadowLight = new THREE.SpotLight(0xfff5ec,22,24,Math.PI/4,.8,2);
-  shadowLight.position.set(-3,7,4); shadowLight.target.position.set(0,0,0);
-  shadowLight.castShadow = true;
-  shadowLight.shadow.mapSize.set(mobile ? 1024 : 2048,mobile ? 1024 : 2048);
-  shadowLight.shadow.radius = 2;
-  shadowLight.shadow.autoUpdate = false;
-  shadowLight.shadow.needsUpdate = true;
-  shadowLight.shadow.bias = -.00015; shadowLight.shadow.normalBias = .025;
-  shadowLight.shadow.camera.near = .5; shadowLight.shadow.camera.far = 22;
-  scene.add(shadowLight, shadowLight.target);
-}
 async function loadModel() {
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   const gltf = await loader.loadAsync('./assets/mclaren.glb', event => {
@@ -117,9 +79,8 @@ async function loadModel() {
   });
   const root = gltf.scene;
   root.rotation.y = config.model.rotationY;
-  const importedLights = [];
-  root.traverse(object => {
-    if (object.isLight) importedLights.push(object);
+  const car = isolateCar(root);
+  car.traverse(object => {
     if (!object.isMesh) return;
     object.frustumCulled = true;
     const wasArray = Array.isArray(object.material);
@@ -128,25 +89,14 @@ async function loadModel() {
       const { material, isCar } = prepareMaterial(original, renderer);
       const name = material.name.toLowerCase();
       object.castShadow = isCar && !name.includes('glass');
-      object.receiveShadow = isCar || name === 'material.004';
-      if (name === 'led_bar') ledMaterials.push(material);
+      object.receiveShadow = isCar;
       return material;
     });
     if (!wasArray) object.material = object.material[0];
   });
-  importedLights.forEach(light => light.removeFromParent());
-  scene.add(root);
-  // Grounding shadow: a soft baked-style contact patch supplements the single shadow map.
-  const textureCanvas = document.createElement('canvas'); textureCanvas.width = textureCanvas.height = 128;
-  const ctx = textureCanvas.getContext('2d');
-  const gradient = ctx.createRadialGradient(64,64,12,64,64,64);
-  gradient.addColorStop(0,'rgba(0,0,0,.65)'); gradient.addColorStop(.6,'rgba(0,0,0,.3)'); gradient.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle = gradient; ctx.fillRect(0,0,128,128);
-  const patch = new THREE.Mesh(new THREE.PlaneGeometry(4.4,8.2),new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(textureCanvas),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1 }));
-  patch.rotation.x = -Math.PI/2; patch.rotation.z = -config.model.rotationY; patch.position.y = -.020;
-  scene.add(patch);
-
+  scene.add(car, createShadowCatcher(car));
 }
+
 function resize() {
   measure();
   if (!renderer) return;
@@ -191,11 +141,6 @@ function render(now) {
   camera.updateMatrixWorld(true);
   direction.copy(target).applyMatrix4(camera.matrixWorldInverse);
   post.focus.value = Math.max(.1,-direction.z);
-  keyLight.intensity = .8 + reveal*1.2;
-  rimLight.intensity = .25 + reveal*.4;
-  sweepLight.lookAt(lightTarget);
-  sweepLight.intensity = .15;
-  ledMaterials.forEach((material,i) => { material.emissiveIntensity = reduced ? 1.1 : 1.1*THREE.MathUtils.smoothstep(intro,i*.075,.65+i*.075); });
   renderer.toneMappingExposure = .85;
   post.render();
   if (!qualityDropped && intro > 4 && rawDt > .038 && rawDt < .3) slowTime += rawDt;
@@ -235,11 +180,10 @@ async function init() {
     camera = new THREE.PerspectiveCamera(30,innerWidth/innerHeight,.1,150);
     positions = new THREE.CatmullRomCurve3(config.keyframes.map(f=>new THREE.Vector3(...f.position)),false,'centripetal');
     targets = new THREE.CatmullRomCurve3(config.keyframes.map(f=>new THREE.Vector3(...f.target)),false,'centripetal');
-    createLighting();
     post = createPostProcessing(renderer,scene,camera);
     resize();
-    await createEnvironment();
     await loadModel();
+    await createPracticalLighting(scene, renderer, new GLTFLoader(), mobile);
     $('#loader p').textContent = 'Preparando materiais e iluminação';
     scrollValue = storyProgress();
     positions.getPoint(scrollValue / (chapters.length - 1),camera.position);

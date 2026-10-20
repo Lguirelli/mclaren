@@ -1,74 +1,51 @@
-# McLaren MP4/5 — edição WebGPU
+# McLaren MP4/5 — edição WebGPU com luminárias
 
 ## Executar
 
-1. Extraia o ZIP em uma pasta nova.
-2. Abra um terminal dentro de `mclaren-webgpu`.
-3. Execute `npm start` com Node.js instalado.
-4. Abra http://127.0.0.1:3000 em um navegador atualizado.
+Extraia o ZIP em uma pasta nova, abra um terminal dentro de `mclaren-webgpu` e execute `npm start`. Abra http://127.0.0.1:3000 no navegador. Node.js é necessário; npm install não é necessário. Não abra o HTML por duplo clique.
 
-Não abra o HTML por duplo clique. A cena precisa ser servida por HTTP local ou HTTPS.
-O modelo e o Three.js estão incluídos. Não é necessário executar npm install.
-As fontes Barlow Condensed e Manrope são solicitadas ao Google Fonts, com fontes alternativas se a conexão falhar.
+O carro, as luminárias, suas texturas e o Three.js 0.180.0 estão incluídos. As fontes Barlow Condensed e Manrope usam Google Fonts com alternativas locais. Para publicar, envie o conteúdo completo da pasta a um serviço de hospedagem estática.
 
-## Publicar
+## Direção de iluminação
 
-Publique o conteúdo da pasta, incluindo `vendor/`, em um serviço estático como GitHub Pages.
-Não há compilação. `server.mjs` é apenas o servidor de desenvolvimento local.
+O cenário contém o carro, um único plano transparente que recebe sombras e os dois assets fornecidos. O piso texturizado, a estrutura e as barras luminosas do cenário original continuam excluídos.
 
-## Renderização
+- A luminária suspensa fornece luz superior neutra, com aproximadamente três metros de comprimento e base a 3,5 metros. Seus cabos originais continuam visíveis e terminam acima da peça, sem teto modelado.
+- O tripé industrial fica na lateral traseira, com altura aproximada de 1,66 metro. Dois focos levemente quentes acompanham os centros e as direções reais das lentes.
+- A luz ampla superior e a fonte que projeta sua sombra compartilham a mesma origem. É uma aproximação de área com sombra em tempo real, não uma simulação fotométrica da luminária.
+- O ambiente de reflexos usa cartões nas posições e orientações dessas luminárias, com preenchimento ambiente discreto. Foram retiradas as luzes anteriores sem uma luminária correspondente.
+- A emissão das lâmpadas é contida e estável, sem pulsação ou aumento de intensidade durante a entrada. O brilho superficial da lâmpada e a luz que ilumina a carroceria são calculados separadamente pelo renderizador.
+- O plano de sombra não tem textura, reflexo de piso nem sombra pintada. O contraste da sombra é discreto sobre o fundo escuro.
 
-- Three.js 0.180.0 fixo, incluído em `vendor/three` com a licença original.
-- WebGPURenderer com inicialização assíncrona e fallback nativo para WebGL 2.
-- Pós-processamento TSL em lugar de EffectComposer, BokehPass e UnrealBloomPass.
-- AgX para transições suaves nas altas luzes e exposição estável.
-- Pintura não metálica com verniz discreto e rugosidade mínima.
-- Rugosidade das rodas modulada pelo mapa original de metalização para diferenciar borracha e aros.
-- Luzes amplas e ambiente de reflexos com posições correspondentes, sem varredura de luz artificial.
-- Sombra PCF, sombra de contato aproximada e GTAO discreto no desktop.
-- Profundidade de campo suave no perfil WebGPU completo e bloom discreto.
-- No celular ou em desempenho baixo, os efeitos de tela são removidos para reduzir o custo.
-- WebGL 2 mantém oclusão e bloom no desktop, sem profundidade de campo.
-- Câmera fracionária contínua com limite de velocidade, inclusive com efeitos reduzidos.
-- Narrativa revisada, fontes e animações de entrada preservadas.
+## Preparação dos assets
 
-O modo de movimento reduzido retira a introdução, a paralaxe e as entradas dos textos.
-A câmera continua acompanhando a navegação suavemente, sem saltar entre capítulos.
+`industrial-work-light.zip` continha um FBX com referências antigas de textura, dois materiais e mapas de cor, normal, metalização e rugosidade. As referências foram reconstruídas e o material das duas lentes foi preservado separadamente. O resultado tem 18.998 triângulos e aproximadamente 5,21 MB.
 
-## Conferir o fallback
+`hanging-light.zip` continha um ZIP interno com COLLADA, oito peças e mapas PBR, incluindo emissão. As transformações do COLLADA foram preservadas e a escala corrigida para uma peça base de 1,5 metro, ampliada na cena para três metros. O resultado tem 6.544 triângulos e aproximadamente 2,19 MB.
 
-Abra http://127.0.0.1:3000/?renderer=webgl para solicitar explicitamente o backend WebGL 2.
-No endereço normal, WebGPU tem preferência. O backend ativo fica no atributo `data-renderer`
-do elemento HTML, para inspeção técnica, sem aparecer na interface do visitante.
+Os dois assets foram convertidos para GLB com texturas de 1024 pixels incorporadas. Cor e emissão usam sRGB; mapas físicos usam dados lineares. O mapa de oclusão separado não foi incorporado, evitando escurecimento adicional sobre o GTAO existente. Os arquivos originais permanecem intactos.
 
-## Arquivos de ajuste
+## Renderização e movimento
 
-- `src/main.js`: cena, iluminação, carregamento e movimento.
-- `src/materials.js`: materiais físicos e tratamento de rugosidade.
-- `src/postprocessing.js`: efeitos TSL e perfis de qualidade.
-- `src/cameraMotion.js`: suavização e limite de velocidade.
-- `config/cameraPath.json`: seis enquadramentos em ordem dos capítulos.
-- `index.html` e `src/styles.css`: narrativa e apresentação.
+WebGPURenderer com inicialização assíncrona e fallback nativo para WebGL 2, materiais físicos, AgX e exposição estável. A câmera percorre uma curva contínua com limite de velocidade. Narrativa, fontes e entrada dos textos foram preservadas.
+
+O desktop usa GTAO discreto, bloom leve e profundidade de campo suave no perfil WebGPU completo. Celulares e dispositivos lentos usam um perfil mais leve. O movimento reduzido desativa introdução, paralaxe e entradas dos textos, mantendo a câmera suave.
+
+Para solicitar WebGL 2 explicitamente, abra http://127.0.0.1:3000/?renderer=webgl.
+
+## Ajustes
+
+- `src/practicalLighting.js`: posições das luminárias, fontes de luz, sombras e ambiente de reflexos.
+- `src/scenery.js`: isolamento do carro e plano de sombra.
+- `src/materials.js`: materiais do carro.
+- `src/main.js`: carregamento, câmera e interação.
+- `src/postprocessing.js`: efeitos e perfis de qualidade.
+- `config/cameraPath.json`: enquadramentos.
 
 ## Verificações e limites
 
-Passaram os testes de sintaxe, resolução dos módulos locais, construção do renderizador,
-seleção explícita do backend WebGL, conversão dos oito materiais com preservação de texturas,
-construção dos grafos de pós-processamento, inicialização do decodificador Meshopt e regressão
-_da lógica_ de movimento a 30, 60 e 120 quadros por segundo.
+A geometria dos três GLBs foi decodificada em testes. Foram verificados os materiais PBR incorporados, a emissão das lentes, a conversão para materiais WebGPU, a escala, a preservação das transformações do carro e o plano de sombra. Sintaxe e regressão da câmera também foram verificadas.
 
-Esses testes não confirmam a compilação dos shaders na GPU nem a aparência final.
-O navegador integrado não conseguiu acessar a prévia local neste ambiente. A renderização real,
-a aparência do modelo e o fallback automático em diferentes dispositivos ainda exigem teste no navegador.
+As duas luminárias foram inspecionadas em imagens renderizadas no Blender. Essas imagens serviram para conferir geometria e materiais; não representam uma validação visual da cena no WebGPU. A conferência HTTP local foi bloqueada pelo ambiente na revisão anterior. A aparência final, a compilação dos shaders e o fallback automático precisam de conferência no navegador.
 
-A iluminação usa aproximações em tempo real. O ambiente de reflexos é estático, a sombra
-complementar de contato é uma textura suave e não há path tracing nem reflexo planar do carro no piso.
-
-## Referências
-
-- https://threejs.org/manual/pages/webgpurenderer
-- https://github.com/mrdoob/three.js/tree/r180
-- https://global.honda/en/F1/machine/1989_McLarenHondaMP45/
-- https://global.honda/en/POWEREDbyHONDA/1989_ra109e/
-
-Os modelos e as marcas vieram do projeto original. Estudo visual independente.
+Os modelos e marcas foram fornecidos pelo usuário. Não foi incluída uma licença adicional dos assets nos arquivos enviados. Mantenha os créditos e condições de uso dos respectivos autores ao publicar.
