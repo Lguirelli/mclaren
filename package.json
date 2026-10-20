@@ -1,0 +1,1 @@
+{"name":"mclaren-cinematic","private":true,"type":"module","scripts":{"start":"node server.mjs","check":"node --check src/main.js"}}

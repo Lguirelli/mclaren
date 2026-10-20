@@ -1,10 +1,9 @@
 {
-  "description": "Ordem de enquadramentos reorganizada para um fluxo mais suave: frente 3/4 baixa -> close frontal -> capô em plongée -> top-down diagonal -> plano aberto traseiro -> traseira 3/4 baixa final.",
+  "description": "Seis enquadramentos sincronizados com os capítulos do HTML; interpolação contínua centrípeta.",
   "camera": {
     "fov": 33,
     "near": 0.1,
-    "far": 250,
-    "smoothness": 0.07
+    "far": 250
   },
   "model": {
     "rotationY": -0.18,
@@ -12,8 +11,7 @@
   },
   "keyframes": [
     {
-      "progress": 0.0,
-      "shot": "Hero — frente 3/4 baixa",
+      "shot": "A máquina — frente 3/4 baixa",
       "position": [
         8.4,
         1.85,
@@ -24,13 +22,10 @@
         0.82,
         0.2
       ],
-      "lensFocus": 10.6,
-      "fov": 30,
-      "modelRotationY": -0.18
+      "fov": 30
     },
     {
-      "progress": 0.2,
-      "shot": "Design — close frontal",
+      "shot": "A forma — detalhe frontal",
       "position": [
         5.9,
         1.35,
@@ -41,13 +36,10 @@
         0.72,
         0.42
       ],
-      "lensFocus": 4.0,
-      "fov": 24.5,
-      "modelRotationY": -0.18
+      "fov": 24.5
     },
     {
-      "progress": 0.4,
-      "shot": "História — capô em plongée",
+      "shot": "A mudança — carenagem superior",
       "position": [
         3.45,
         4.55,
@@ -58,13 +50,10 @@
         0.97,
         0.98
       ],
-      "lensFocus": 4.8,
-      "fov": 25.8,
-      "modelRotationY": -0.18
+      "fov": 25.8
     },
     {
-      "progress": 0.62,
-      "shot": "Especificações — top-down diagonal",
+      "shot": "A engenharia — vista superior",
       "position": [
         0.85,
         8.15,
@@ -75,13 +64,10 @@
         0.68,
         0.08
       ],
-      "lensFocus": 7.8,
-      "fov": 28.5,
-      "modelRotationY": -0.18
+      "fov": 28.5
     },
     {
-      "progress": 0.82,
-      "shot": "Legado — aberto e distante",
+      "shot": "Os protagonistas — plano aberto",
       "position": [
         -6.9,
         3.4,
@@ -92,13 +78,10 @@
         0.72,
         -0.22
       ],
-      "lensFocus": 15.0,
-      "fov": 35.5,
-      "modelRotationY": -0.18
+      "fov": 35.5
     },
     {
-      "progress": 1.0,
-      "shot": "Performance — traseira 3/4 baixa",
+      "shot": "O legado — traseira 3/4",
       "position": [
         -8.5,
         1.72,
@@ -109,9 +92,7 @@
         0.78,
         -0.32
       ],
-      "lensFocus": 8.6,
-      "fov": 31.5,
-      "modelRotationY": -0.18
+      "fov": 31.5
     }
   ]
 }

@@ -1,0 +1,98 @@
+{
+  "description": "Seis enquadramentos sincronizados com os capítulos do HTML; interpolação contínua centrípeta.",
+  "camera": {
+    "fov": 33,
+    "near": 0.1,
+    "far": 250
+  },
+  "model": {
+    "rotationY": -0.18,
+    "floorOffset": 0
+  },
+  "keyframes": [
+    {
+      "shot": "A máquina — frente 3/4 baixa",
+      "position": [
+        8.4,
+        1.85,
+        7.5
+      ],
+      "target": [
+        0.65,
+        0.82,
+        0.2
+      ],
+      "fov": 30
+    },
+    {
+      "shot": "A forma — detalhe frontal",
+      "position": [
+        5.9,
+        1.35,
+        2.25
+      ],
+      "target": [
+        1.42,
+        0.72,
+        0.42
+      ],
+      "fov": 24.5
+    },
+    {
+      "shot": "A mudança — carenagem superior",
+      "position": [
+        3.45,
+        4.55,
+        4.85
+      ],
+      "target": [
+        0.96,
+        0.97,
+        0.98
+      ],
+      "fov": 25.8
+    },
+    {
+      "shot": "A engenharia — vista superior",
+      "position": [
+        0.85,
+        8.15,
+        1.75
+      ],
+      "target": [
+        0.05,
+        0.68,
+        0.08
+      ],
+      "fov": 28.5
+    },
+    {
+      "shot": "Os protagonistas — plano aberto",
+      "position": [
+        -6.9,
+        3.4,
+        -11.8
+      ],
+      "target": [
+        -0.25,
+        0.72,
+        -0.22
+      ],
+      "fov": 35.5
+    },
+    {
+      "shot": "O legado — traseira 3/4",
+      "position": [
+        -8.5,
+        1.72,
+        -7.05
+      ],
+      "target": [
+        -0.52,
+        0.78,
+        -0.32
+      ],
+      "fov": 31.5
+    }
+  ]
+}
