@@ -74,11 +74,13 @@ export function assemblePracticalLighting(scene, renderer, templates, mobile) {
   return sources;
 }
 
-export async function createPracticalLighting(scene, renderer, loader, mobile) {
-  const [hanging,industrial] = await Promise.all([
-    loader.loadAsync('./assets/hanging-light.glb'),
-    loader.loadAsync('./assets/industrial-light.glb')
-  ]);
+export async function createPracticalLighting(scene, renderer, loader, mobile, onProgress = () => {}) {
+  const load = async key => {
+    const result = await loader.loadAsync(`./assets/${key}.glb`,event=>onProgress(key,event));
+    onProgress(key,{complete:true});
+    return result;
+  };
+  const [hanging,industrial] = await Promise.all([load('hanging-light'),load('industrial-light')]);
   const sources = assemblePracticalLighting(scene,renderer,{hanging:hanging.scene,industrial:industrial.scene},mobile);
   // The environment contains only cards matching the installed lamps, plus weak room bounce.
   const environment = new THREE.Scene(); environment.background = new THREE.Color(0x101116);

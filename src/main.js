@@ -1,3 +1,4 @@
+import { createLoadingProgress } from './loadingProgress.js';
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
@@ -8,6 +9,10 @@ import { isolateCar, createShadowCatcher } from './scenery.js';
 import { createPostProcessing } from './postprocessing.js';
 
 const $ = (selector) => document.querySelector(selector);
+const loading = createLoadingProgress((percent,label) => {
+  $('#loader p').textContent = `${label} · ${percent}%`;
+  $('.loader-track span').style.width = `${percent}%`;
+});
 const chapters = [...document.querySelectorAll('.chapter')];
 const links = [...document.querySelectorAll('.chapter-nav a')];
 const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
@@ -72,11 +77,8 @@ document.fonts.ready.then(() => { measure(); requestFrame(); });
 
 async function loadModel() {
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  const gltf = await loader.loadAsync('./assets/mclaren.glb', event => {
-    const p = event.total ? Math.round(event.loaded / event.total * 100) : 0;
-    $('#loader p').textContent = p ? `Carregando a cena · ${p}%` : 'Carregando a cena';
-    $('.loader-track span').style.width = `${Math.max(5,p)}%`;
-  });
+  const gltf = await loader.loadAsync('./assets/mclaren.glb', event => loading.asset('mclaren',event));
+  loading.asset('mclaren',{complete:true});
   const root = gltf.scene;
   root.rotation.y = config.model.rotationY;
   const car = isolateCar(root);
@@ -183,8 +185,8 @@ async function init() {
     post = createPostProcessing(renderer,scene,camera);
     resize();
     await loadModel();
-    await createPracticalLighting(scene, renderer, new GLTFLoader(), mobile);
-    $('#loader p').textContent = 'Preparando materiais e iluminação';
+    await createPracticalLighting(scene, renderer, new GLTFLoader(), mobile, (key,event)=>loading.asset(key,event));
+    loading.preparing();
     scrollValue = storyProgress();
     positions.getPoint(scrollValue / (chapters.length - 1),camera.position);
     targets.getPoint(scrollValue / (chapters.length - 1),target);
@@ -192,6 +194,7 @@ async function init() {
     await renderer.compileAsync(scene,camera);
     ready = true; intro = reduced ? 4 : 0;
     render(performance.now());
+    loading.complete();
     $('#loader').classList.add('is-hidden'); revealStory();
     $('#webgl').addEventListener('webglcontextlost',event=>{event.preventDefault();ready=false;cancelAnimationFrame(frameId);frameId=0;document.body.classList.remove('motion-enabled');});
     $('#webgl').addEventListener('webglcontextrestored',()=>location.reload());

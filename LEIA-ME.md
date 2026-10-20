@@ -55,3 +55,7 @@ Os modelos e marcas foram fornecidos pelo usuário. Não foi incluída uma licen
 Adicionada uma luminária suspensa e dois tripés. As cinco peças compartilham geometrias e texturas dos dois GLBs, carregados apenas uma vez cada. A intensidade total das fontes existentes foi redistribuída entre as novas peças; isso não garante exposição idêntica em cada ponto do carro.
 
 Os mapas de sombra são estáticos e usam resoluções menores por fonte para limitar a memória, com possível redução de definição nas sombras em close. Testes de montagem desktop e celular confirmaram cinco luminárias, oito posições emissoras, compartilhamento de geometria, folga em relação ao carro e orientação dos refletores. A aparência final no navegador permanece sem validação visual.
+
+## Revisão 7
+Corrigido o progresso acima de 100%. O cálculo usa os tamanhos descomprimidos dos três GLBs incluídos, contabiliza carro e luminárias e reserva a etapa final para preparar a cena. O percentual é monotônico e limitado. Se substituir os assets, atualize os tamanhos em src/loadingProgress.js. Testados totais comprimidos, progresso concorrente e eventos sem tamanho válido.
+
