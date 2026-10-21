@@ -1,12 +1,13 @@
-import { createLoadingProgress } from './loadingProgress.js';
+import { withStartupTimeout } from './startup.js?v=8';
+import { createLoadingProgress } from './loadingProgress.js?v=8';
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { createPracticalLighting } from './practicalLighting.js';
-import { advanceCameraProgress } from './cameraMotion.js';
-import { prepareMaterial } from './materials.js';
-import { isolateCar, createShadowCatcher } from './scenery.js';
-import { createPostProcessing } from './postprocessing.js';
+import { createPracticalLighting } from './practicalLighting.js?v=8';
+import { advanceCameraProgress } from './cameraMotion.js?v=8';
+import { prepareMaterial } from './materials.js?v=8';
+import { isolateCar, createShadowCatcher } from './scenery.js?v=8';
+import { createPostProcessing } from './postprocessing.js?v=8';
 
 const $ = (selector) => document.querySelector(selector);
 const loading = createLoadingProgress((percent,label) => {
@@ -16,6 +17,7 @@ const loading = createLoadingProgress((percent,label) => {
 const chapters = [...document.querySelectorAll('.chapter')];
 const links = [...document.querySelectorAll('.chapter-nav a')];
 const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+const compatible = new URLSearchParams(location.search).get('renderer') === 'webgl';
 let reduced = motionQuery.matches;
 let ready = false;
 let scene, camera, renderer, post;
@@ -33,7 +35,7 @@ function applyMotion() {
   document.documentElement.style.scrollBehavior = reduced ? 'auto' : 'smooth';
   $('#motion-toggle').setAttribute('aria-pressed', String(reduced));
   $('#motion-toggle').textContent = reduced ? 'Ativar movimento' : 'Reduzir movimento';
-  if (post) post.setQuality({mobile,reduced,low:qualityDropped});
+  if (post) post.setQuality({mobile,reduced,low:qualityDropped || compatible});
   if (reduced) intro = 4;
   requestFrame();
 }
@@ -106,7 +108,7 @@ function resize() {
   renderer.setPixelRatio(ratio); renderer.setSize(innerWidth,innerHeight);
   
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  post?.setQuality({mobile,reduced,low:qualityDropped});
+  post?.setQuality({mobile,reduced,low:qualityDropped || compatible});
   updateEditorial(); requestFrame();
 }
 function requestFrame() { if (ready && !document.hidden && !frameId) frameId = requestAnimationFrame(render); }
@@ -157,6 +159,25 @@ window.addEventListener('pointermove',event=>{if(mobile || reduced)return;pointe
 window.addEventListener('resize',resize);
 document.addEventListener('visibilitychange',()=>{lastTime=0;if(document.hidden){cancelAnimationFrame(frameId);frameId=0;}else requestFrame();});
 
+let startupStage = 'inicialização';
+function showStartupFailure(error) {
+  ready = false; cancelAnimationFrame(frameId); frameId = 0;
+  console.error('Scene initialization failed at '+startupStage+':',error);
+  $('#loader p').textContent = 'Não foi possível concluir a '+startupStage+'.';
+  let retry = document.querySelector('#retry-scene');
+  if (!retry) {
+    retry = document.createElement('button'); retry.id = 'retry-scene'; retry.type = 'button';
+    $('#loader').append(retry);
+  }
+  retry.textContent = compatible ? 'Tentar novamente' : 'Abrir em modo compatível';
+  retry.onclick = () => {
+    const url = new URL(location.href); url.searchParams.set('renderer','webgl');
+    if (compatible) location.reload(); else location.assign(url.href);
+  };
+  $('#loader').classList.remove('is-hidden');
+  $('#skip-loading').textContent = 'Continuar para a história';
+  document.body.classList.remove('motion-enabled'); revealStory();
+}
 async function init() {
   try {
     const response = await fetch('./config/cameraPath.json');
@@ -165,8 +186,9 @@ async function init() {
     scene = new THREE.Scene(); scene.background = new THREE.Color(0x08090b);
     scene.fog = new THREE.FogExp2(0x08090b,.018);
     renderer = new THREE.WebGPURenderer({canvas:$('#webgl'),antialias:true,alpha:false,
-      forceWebGL:new URLSearchParams(location.search).get('renderer') === 'webgl'});
-    await renderer.init();
+      forceWebGL:compatible});
+    startupStage = 'inicialização gráfica';
+    await withStartupTimeout(renderer.init(),'Inicialização gráfica');
     document.documentElement.dataset.renderer = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl2';
     renderer.onDeviceLost = () => {
       ready = false; cancelAnimationFrame(frameId); frameId = 0;
@@ -184,14 +206,18 @@ async function init() {
     targets = new THREE.CatmullRomCurve3(config.keyframes.map(f=>new THREE.Vector3(...f.target)),false,'centripetal');
     post = createPostProcessing(renderer,scene,camera);
     resize();
+    startupStage = 'leitura do carro';
     await loadModel();
+    startupStage = 'preparação das luminárias';
     await createPracticalLighting(scene, renderer, new GLTFLoader(), mobile, (key,event)=>loading.asset(key,event));
     loading.preparing();
+    startupStage = 'preparação dos materiais';
     scrollValue = storyProgress();
     positions.getPoint(scrollValue / (chapters.length - 1),camera.position);
     targets.getPoint(scrollValue / (chapters.length - 1),target);
     camera.lookAt(target);
-    await renderer.compileAsync(scene,camera);
+    await withStartupTimeout(renderer.compileAsync(scene,camera),'Compilação dos materiais');
+    startupStage = 'renderização da cena';
     ready = true; intro = reduced ? 4 : 0;
     render(performance.now());
     loading.complete();
@@ -199,10 +225,7 @@ async function init() {
     $('#webgl').addEventListener('webglcontextlost',event=>{event.preventDefault();ready=false;cancelAnimationFrame(frameId);frameId=0;document.body.classList.remove('motion-enabled');});
     $('#webgl').addEventListener('webglcontextrestored',()=>location.reload());
   } catch(error) {
-    console.error('Scene initialization failed:',error);
-    $('#loader p').textContent='A cena 3D não pôde ser carregada. A história continua disponível.';
-    $('#skip-loading').textContent='Continuar para a história';
-    document.body.classList.remove('motion-enabled'); revealStory();
+    showStartupFailure(error);
   }
 }
 init();

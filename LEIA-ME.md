@@ -59,3 +59,9 @@ Os mapas de sombra são estáticos e usam resoluções menores por fonte para li
 ## Revisão 7
 Corrigido o progresso acima de 100%. O cálculo usa os tamanhos descomprimidos dos três GLBs incluídos, contabiliza carro e luminárias e reserva a etapa final para preparar a cena. O percentual é monotônico e limitado. Se substituir os assets, atualize os tamanhos em src/loadingProgress.js. Testados totais comprimidos, progresso concorrente e eventos sem tamanho válido.
 
+
+## Revisão 8
+Mantidas as cinco luminárias e limitadas as sombras a três fontes no desktop e uma no celular. As demais fontes fornecem preenchimento sem sombra própria, reduzindo o número de texturas por material. Essa configuração corrige um risco de ultrapassar o limite gráfico, mas a causa do bloqueio relatado não foi reproduzida neste ambiente.
+Os módulos locais agora têm a mesma versão para evitar misturar arquivos de versões diferentes em cache. Falhas na preparação mostram a etapa afetada e um botão para abrir em WebGL 2 com efeitos reduzidos. Operações gráficas com duração superior a 60 segundos liberam essa opção de recuperação.
+Testes de montagem, progresso, sintaxe e tempo limite passaram. O acesso HTTP local foi bloqueado pelo ambiente; falta validar a cena renderizada no navegador. Extraia em uma pasta nova para testar.
+

@@ -1,10 +1,11 @@
+import { withStartupTimeout } from './startup.js?v=8';
 import * as THREE from 'three/webgpu';
 import { RectAreaLightTexturesLib } from 'three/addons/lights/RectAreaLightTexturesLib.js';
 
 export const fixtureLayout = [
-  {kind:'hanging', name:'Luz superior principal', position:[-1.35,3.5,0], rotationY:Math.PI/2, scale:2, area:4.5, power:22, emission:1, reflection:1.3},
+  {kind:'hanging', name:'Luz superior principal', shadows:true, position:[-1.35,3.5,0], rotationY:Math.PI/2, scale:2, area:4.5, power:22, emission:1, reflection:1.3},
   {kind:'hanging', name:'Luz superior de preenchimento', position:[1.45,3.8,-.6], rotationY:Math.PI/2, scale:2, area:2.5, power:12, emission:.65, reflection:.7},
-  {kind:'industrial', name:'Refletores laterais direitos', position:[2.9,-.0621,-2.7], scale:1.5, power:6, emission:.65, reflection:.6},
+  {kind:'industrial', name:'Refletores laterais direitos', shadows:true, position:[2.9,-.0621,-2.7], scale:1.5, power:6, emission:.65, reflection:.6},
   {kind:'industrial', name:'Refletores dianteiros esquerdos', position:[-3.3,-.0621,2.8], scale:1.5, power:5, emission:.55, reflection:.5},
   {kind:'industrial', name:'Refletores traseiros esquerdos', position:[-3.2,-.0621,-3], scale:1.5, power:3, emission:.4, reflection:.3}
 ];
@@ -55,7 +56,7 @@ export function assemblePracticalLighting(scene, renderer, templates, mobile) {
       key.position.copy(position); key.lookAt(target); scene.add(key);
       const light = new THREE.SpotLight(0xf1f4ff,layout.power,16,Math.PI/2.9,1,2);
       light.position.copy(position); light.target.position.copy(target);
-      shadowSettings(light,mobile ? 512 : 1024,16);
+      if (layout.shadows) shadowSettings(light,mobile ? 512 : 1024,16);
       scene.add(light,light.target);
       sources.push({position,target,width:.34,height:2.9,color:0xf1f4ff,intensity:layout.reflection});
     } else {
@@ -65,7 +66,7 @@ export function assemblePracticalLighting(scene, renderer, templates, mobile) {
         const target = position.clone().add(normal);
         const light = new THREE.SpotLight(0xffe4c4,layout.power,12,Math.PI/3.5,.85,2);
         light.position.copy(position); light.target.position.copy(target);
-        shadowSettings(light,mobile ? 256 : 512,12);
+        if (layout.shadows && !mobile) shadowSettings(light,512,12);
         scene.add(light,light.target);
         sources.push({position,target,width:.24,height:.12,color:0xffe4c4,intensity:layout.reflection});
       }
@@ -91,7 +92,7 @@ export async function createPracticalLighting(scene, renderer, loader, mobile, o
     card.position.copy(source.position); card.lookAt(source.target); environment.add(card);
   }
   const pmrem = new THREE.PMREMGenerator(renderer);
-  const map = await pmrem.fromSceneAsync(environment,.06,.1,50,{size:256});
+  const map = await withStartupTimeout(pmrem.fromSceneAsync(environment,.06,.1,50,{size:256}),'Preparação dos reflexos');
   scene.environment = map.texture;
   environment.traverse(o=>{o.geometry?.dispose();o.material?.dispose();}); pmrem.dispose();
   // Update the static shadow maps once after all fixtures and the car are present.
