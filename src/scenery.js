@@ -1,4 +1,4 @@
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 
 const carMaterials = new Set(['body_mat', 'wheels_mat', 'bottom_details_mat', 'glass_details_mat', 'interior_mat']);
 
@@ -24,7 +24,7 @@ export function createShadowCatcher(car) {
   const center = bounds.getCenter(new THREE.Vector3());
   const plane = new THREE.Mesh(
     new THREE.PlaneGeometry(Math.max(size.x, size.z) * 4, Math.max(size.x, size.z) * 4),
-    new THREE.ShadowNodeMaterial({color: 0x000000, opacity: .45, depthWrite: false})
+    new THREE.ShadowMaterial({color: 0x000000, opacity: .45, depthWrite: false})
   );
   plane.name = 'Shadow catcher';
   plane.rotation.x = -Math.PI / 2;

@@ -1,6 +1,5 @@
-import { withStartupTimeout } from './startup.js?v=8';
-import * as THREE from 'three/webgpu';
-import { RectAreaLightTexturesLib } from 'three/addons/lights/RectAreaLightTexturesLib.js';
+import * as THREE from 'three';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 
 export const fixtureLayout = [
   {kind:'hanging', name:'Luz superior principal', shadows:true, position:[-1.35,3.5,0], rotationY:Math.PI/2, scale:2, area:4.5, power:22, emission:1, reflection:1.3},
@@ -17,7 +16,7 @@ const faces = [
 ];
 
 export function assemblePracticalLighting(scene, renderer, templates, mobile) {
-  THREE.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
+  RectAreaLightUniformsLib.init();
   const sources = [];
   const shadowSettings = (light, size, far) => {
     light.castShadow = true;
@@ -38,7 +37,7 @@ export function assemblePracticalLighting(scene, renderer, templates, mobile) {
       if (!object.isMesh) return;
       const convert = original => {
         if (materials.has(original)) return materials.get(original);
-        const material = renderer.library.fromMaterial(original.clone());
+        const material = original.clone();
         if (!material) throw new Error('Unsupported fixture material: '+original.name);
         material.envMapIntensity = .25;
         material.emissiveIntensity *= layout.emission;
@@ -66,7 +65,7 @@ export function assemblePracticalLighting(scene, renderer, templates, mobile) {
         const target = position.clone().add(normal);
         const light = new THREE.SpotLight(0xffe4c4,layout.power,12,Math.PI/3.5,.85,2);
         light.position.copy(position); light.target.position.copy(target);
-        if (layout.shadows && !mobile) shadowSettings(light,512,12);
+        // Side lights remain unshadowed to keep one shadow map.
         scene.add(light,light.target);
         sources.push({position,target,width:.24,height:.12,color:0xffe4c4,intensity:layout.reflection});
       }
@@ -92,7 +91,7 @@ export async function createPracticalLighting(scene, renderer, loader, mobile, o
     card.position.copy(source.position); card.lookAt(source.target); environment.add(card);
   }
   const pmrem = new THREE.PMREMGenerator(renderer);
-  const map = await withStartupTimeout(pmrem.fromSceneAsync(environment,.06,.1,50,{size:256}),'Preparação dos reflexos');
+  const map = pmrem.fromScene(environment,.06,.1,50);
   scene.environment = map.texture;
   environment.traverse(o=>{o.geometry?.dispose();o.material?.dispose();}); pmrem.dispose();
   // Update the static shadow maps once after all fixtures and the car are present.

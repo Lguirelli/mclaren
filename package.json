@@ -1,9 +1,9 @@
 {
-  "name": "mclaren-universal",
+  "name": "mclaren-webgl",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "check": "node --check src/main.js"
+    "check": "node --check src/main.js && node --check src/materials.js && node --check src/practicalLighting.js"
   }
 }

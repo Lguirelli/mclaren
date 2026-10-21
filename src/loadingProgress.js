@@ -15,7 +15,7 @@ export function createLoadingProgress(update) {
       fractions[key] = Math.max(fractions[key],event.complete ? 1 : Math.min(.99,loaded/sizes[key]));
       publish(90*Object.keys(sizes).reduce((sum,key)=>sum+sizes[key]*fractions[key],0)/total,'Carregando modelos e texturas');
     },
-    preparing() { publish(95,'Preparando materiais e iluminação'); },
+    preparing() { publish(95,'Abrindo a cena 3D'); },
     complete() { publish(100,'Cena pronta'); }
   };
 }
