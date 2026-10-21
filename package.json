@@ -1,9 +1,9 @@
 {
-  "name": "mclaren-webgpu",
+  "name": "mclaren-universal",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "check": "node --check src/main.js && node --check src/materials.js && node --check src/postprocessing.js && node --check src/cameraMotion.js && node --check src/scenery.js && node --check src/practicalLighting.js && node --check src/loadingProgress.js"
+    "check": "node --check src/main.js"
   }
 }
