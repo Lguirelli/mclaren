@@ -1,9 +1,8 @@
 {
-  "name": "mclaren-webgl",
+  "name": "mclaren-landing",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.mjs",
-    "check": "node --check src/main.js && node --check src/materials.js && node --check src/practicalLighting.js"
+    "start": "node server.mjs"
   }
 }

@@ -1,0 +1,9 @@
+McLaren MP4/5 — landing cinematográfica
+
+Três formas de abrir:
+1. Duplo clique em index.html (funciona offline, exceto as fontes do Google).
+2. Publicar esta pasta em qualquer hospedagem estática (Netlify, Vercel, GitHub Pages, Hostinger...).
+3. npm start e abrir http://127.0.0.1:3000 (requer Node.js; não precisa de npm install).
+
+A pasta assets/embedded é usada só na abertura por duplo clique. Em hospedagem ela pode ser removida para economizar espaço.
+Requer navegador com WebGL 2 (Chrome, Edge, Firefox, Safari atuais).
